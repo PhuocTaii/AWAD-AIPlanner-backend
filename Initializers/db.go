@@ -1,4 +1,4 @@
-package db
+package initializers
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 )
 
 var MongoClient *mongo.Client
+
 var UserCollection *mongo.Collection
 
 func ConnectDB(dbUri string, dbName string) {
