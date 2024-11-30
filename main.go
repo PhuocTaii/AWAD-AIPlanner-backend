@@ -26,11 +26,10 @@ func main() {
 
 	mongoURI := os.Getenv("MONGO_URI")
 	dbName := os.Getenv("DB_NAME")
-	port := os.Getenv("PORT")
 
 	initializers.ConnectDB(mongoURI, dbName)
 
 	r := SetupRouter()
 
-	r.Run(":" + port)
+	r.Run(":8080")
 }
