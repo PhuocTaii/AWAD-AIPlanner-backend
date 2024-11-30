@@ -1,13 +1,11 @@
 package main
 
 import (
-	"log"
 	"os"
+	initializers "project/Initializers"
 	routes "project/Routes"
-	"project/db"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func SetupRouter() *gin.Engine {
@@ -15,8 +13,8 @@ func SetupRouter() *gin.Engine {
 
 	api := r.Group("/api")
 	{
-		// routes.SetupUserRouter(api)
 		routes.SetupAuthRouter(api)
+		routes.SetupUserRouter(api)
 	}
 
 	return r
@@ -24,16 +22,13 @@ func SetupRouter() *gin.Engine {
 
 func main() {
 
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatalf("Some error occured. Err: %s", err)
-	}
+	initializers.LoadEnvVariables()
 
 	mongoURI := os.Getenv("MONGO_URI")
 	dbName := os.Getenv("DB_NAME")
 	port := os.Getenv("PORT")
 
-	db.ConnectDB(mongoURI, dbName)
+	initializers.ConnectDB(mongoURI, dbName)
 
 	r := SetupRouter()
 
