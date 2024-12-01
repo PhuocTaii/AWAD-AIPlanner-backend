@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"context"
+	"io/ioutil"
 	"net/http"
-	initializers "project/Initializers"
+	config "project/Config"
 	models "project/Models"
 	auth "project/Models/Request/Auth"
 	services "project/Services"
@@ -10,22 +12,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// type LoginRequest struct {
-// 	Email    string `json:"email"`
-// 	Password string `json:"password"`
-// }
-
-// type RegisterRequest struct {
-// 	Name     string `json:"Name"`
-// 	Email    string `json:"email"`
-// 	Password string `json:"password"`
-// }
-
 func Register(c *gin.Context) {
 	var request auth.RegisterRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		initializers.HandleError(c, http.StatusBadRequest, "Invalid user data", err)
+		config.HandleError(c, http.StatusBadRequest, "Invalid user data", err)
 		return
 	}
 
@@ -44,14 +35,14 @@ func Login(c *gin.Context) {
 	var request auth.LoginRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		initializers.HandleError(c, http.StatusBadRequest, "Invalid user data", err)
+		config.HandleError(c, http.StatusBadRequest, "Invalid user data", err)
 		return
 	}
 
 	token, user, err := services.Login(c, request.Email, request.Password)
 
 	if err != nil {
-		initializers.HandleError(c, http.StatusInternalServerError, "Failed to login", err)
+		config.HandleError(c, http.StatusInternalServerError, "Failed to login", err)
 		return
 	}
 
@@ -59,4 +50,42 @@ func Login(c *gin.Context) {
 		"token": token,
 		"user":  user,
 	})
+}
+
+func GoogleLogin(c *gin.Context) {
+	url := config.AppConfig.GoogleLoginConfig.AuthCodeURL("randomstate")
+
+	c.Redirect(http.StatusSeeOther, url)
+}
+
+func GoogleCallback(c *gin.Context) {
+	state := c.Query("state")
+	if state != "randomstate" {
+		c.String(http.StatusBadRequest, "States don't Match!!")
+		return
+	}
+
+	code := c.Query("code")
+
+	googlecon := config.GoogleConfig()
+
+	token, err := googlecon.Exchange(context.Background(), code)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Code-Token Exchange Failed")
+		return
+	}
+
+	resp, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "User Data Fetch Failed")
+		return
+	}
+
+	userData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "JSON Parsing Failed")
+		return
+	}
+
+	c.String(http.StatusOK, string(userData))
 }

@@ -2,7 +2,7 @@ package main
 
 import (
 	"os"
-	initializers "project/Initializers"
+	config "project/Config"
 	routes "project/Routes"
 
 	"github.com/gin-gonic/gin"
@@ -22,12 +22,14 @@ func SetupRouter() *gin.Engine {
 
 func main() {
 
-	initializers.LoadEnvVariables()
+	config.LoadEnvVariables()
 
 	mongoURI := os.Getenv("MONGO_URI")
 	dbName := os.Getenv("DB_NAME")
 
-	initializers.ConnectDB(mongoURI, dbName)
+	config.ConnectDB(mongoURI, dbName)
+
+	config.GoogleConfig()
 
 	r := SetupRouter()
 
