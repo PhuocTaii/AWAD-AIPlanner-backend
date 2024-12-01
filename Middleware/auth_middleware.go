@@ -4,24 +4,22 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	initializers "project/Initializers"
+	config "project/Config"
 	models "project/Models"
+	repository "project/Repository"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func RequireAuth(c *gin.Context) {
 	header := c.GetHeader("Authorization")
 
 	if header == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
 		c.AbortWithStatus(http.StatusUnauthorized)
 	}
-
-	fmt.Println(header)
 
 	tokenString := header[7:] // remove "Bearer " from token string
 
@@ -35,17 +33,15 @@ func RequireAuth(c *gin.Context) {
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		if float64(time.Now().Unix()) > claims["exp"].(float64) {
-			initializers.HandleError(c, http.StatusUnauthorized, "Token expired", nil)
+			config.HandleError(c, http.StatusUnauthorized, "Token expired", nil)
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}
 
-		objectId, _ := primitive.ObjectIDFromHex(claims["sub"].(string))
-
 		var user models.User
-		err := initializers.UserCollection.FindOne(c, bson.M{"_id": objectId}).Decode(&user)
+		err := repository.FindUserById(c, claims["sub"].(string), &user)
 
 		if err != nil {
-			initializers.HandleError(c, http.StatusUnauthorized, "Unauthorized", err)
+			config.HandleError(c, http.StatusUnauthorized, "Unauthorized", err)
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}
 
