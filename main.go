@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	config "project/Config"
+	middleware "project/Middleware"
 	routes "project/Routes"
 
 	"github.com/gin-gonic/gin"
@@ -32,6 +33,8 @@ func main() {
 	config.GoogleConfig()
 
 	r := SetupRouter()
+
+	r.Use(middleware.CORSMiddleware())
 
 	r.Run(":8080")
 }
