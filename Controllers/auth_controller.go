@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"context"
-	"io/ioutil"
 	"net/http"
 	config "project/Config"
 	models "project/Models"
@@ -11,6 +9,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+// type GoogleUser struct {
+// 	ID            string `json:"id"`
+// 	Email         string `json:"email"`
+// 	VerifiedEmail bool   `json:"verified_email"`
+// 	Name          string `json:"name"`
+// 	GivenName     string `json:"given_name"`
+// 	FamilyName    string `json:"family_name"`
+// 	Picture       string `json:"picture"`
+// }
 
 func Register(c *gin.Context) {
 	var request auth.RegisterRequest
@@ -59,33 +67,15 @@ func GoogleLogin(c *gin.Context) {
 }
 
 func GoogleCallback(c *gin.Context) {
-	state := c.Query("state")
-	if state != "randomstate" {
-		c.String(http.StatusBadRequest, "States don't Match!!")
-		return
-	}
+	token, user, err := services.GoogleLogin(c)
 
-	code := c.Query("code")
-
-	googlecon := config.GoogleConfig()
-
-	token, err := googlecon.Exchange(context.Background(), code)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Code-Token Exchange Failed")
+		config.HandleError(c, http.StatusInternalServerError, "Failed to login", err)
 		return
 	}
 
-	resp, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "User Data Fetch Failed")
-		return
-	}
-
-	userData, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "JSON Parsing Failed")
-		return
-	}
-
-	c.String(http.StatusOK, string(userData))
+	c.JSON(http.StatusOK, gin.H{
+		"token": token,
+		"user":  user,
+	})
 }
