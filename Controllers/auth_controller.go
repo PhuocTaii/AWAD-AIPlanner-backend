@@ -54,7 +54,7 @@ func Login(c *gin.Context) {
 func GoogleLogin(c *gin.Context) {
 	url := config.AppConfig.GoogleLoginConfig.AuthCodeURL("randomstate")
 
-	c.Redirect(http.StatusSeeOther, url)
+	c.JSON(http.StatusSeeOther, url)
 }
 
 func GoogleCallback(c *gin.Context) {
