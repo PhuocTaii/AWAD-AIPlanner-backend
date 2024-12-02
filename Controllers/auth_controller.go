@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"net/http"
 	config "project/Config"
 	models "project/Models"
@@ -54,7 +55,7 @@ func Login(c *gin.Context) {
 func GoogleLogin(c *gin.Context) {
 	url := config.AppConfig.GoogleLoginConfig.AuthCodeURL("randomstate")
 
-	c.Redirect(http.StatusSeeOther, url)
+	c.Redirect(http.StatusOK, url)
 }
 
 func GoogleCallback(c *gin.Context) {
@@ -65,10 +66,15 @@ func GoogleCallback(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"token": token,
-		"user":  user,
-	})
+	// Convert user model to JSON string
+	userJSON, err := json.Marshal(user)
+	if err != nil {
+		config.HandleError(c, http.StatusInternalServerError, "Failed to parse user to JSON", err)
+		return
+	}
+
+	url := "http://localhost:5173?token=" + token + "&user=" + string(userJSON)
+	c.Redirect(http.StatusSeeOther, url)
 }
 
 func Logout(c *gin.Context) {
