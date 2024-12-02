@@ -11,6 +11,8 @@ import (
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
+	r.Use(config.CORSConfig())
+
 	api := r.Group("/api")
 	{
 		routes.SetupAuthRouter(api)
@@ -31,9 +33,9 @@ func main() {
 
 	config.GoogleConfig()
 
-	r := SetupRouter()
+	// r.Use(config.CORSConfig())\
 
-	r.Use(config.CORSConfig())
+	r := SetupRouter()
 
 	r.Run(":8080")
 }
