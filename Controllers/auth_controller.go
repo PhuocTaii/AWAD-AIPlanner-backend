@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	config "project/Config"
 	models "project/Models"
 	auth "project/Models/Request/Auth"
@@ -55,7 +56,7 @@ func Login(c *gin.Context) {
 func GoogleLogin(c *gin.Context) {
 	url := config.AppConfig.GoogleLoginConfig.AuthCodeURL("randomstate")
 
-	c.Redirect(http.StatusOK, url)
+	c.Redirect(http.StatusSeeOther, url)
 }
 
 func GoogleCallback(c *gin.Context) {
@@ -73,7 +74,7 @@ func GoogleCallback(c *gin.Context) {
 		return
 	}
 
-	url := "http://localhost:5173?token=" + token + "&user=" + string(userJSON)
+	url := os.Getenv("CLIENT_URL") + "?token=" + token + "&user=" + string(userJSON)
 	c.Redirect(http.StatusSeeOther, url)
 }
 
