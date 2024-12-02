@@ -13,5 +13,5 @@ func UserProfile(c *gin.Context) {
 	if user == nil {
 		return
 	}
-	c.JSON(http.StatusCreated, user)
+	c.JSON(http.StatusOK, user)
 }

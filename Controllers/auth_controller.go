@@ -6,19 +6,10 @@ import (
 	models "project/Models"
 	auth "project/Models/Request/Auth"
 	services "project/Services"
+	utils "project/Utils"
 
 	"github.com/gin-gonic/gin"
 )
-
-// type GoogleUser struct {
-// 	ID            string `json:"id"`
-// 	Email         string `json:"email"`
-// 	VerifiedEmail bool   `json:"verified_email"`
-// 	Name          string `json:"name"`
-// 	GivenName     string `json:"given_name"`
-// 	FamilyName    string `json:"family_name"`
-// 	Picture       string `json:"picture"`
-// }
 
 func Register(c *gin.Context) {
 	var request auth.RegisterRequest
@@ -78,4 +69,9 @@ func GoogleCallback(c *gin.Context) {
 		"token": token,
 		"user":  user,
 	})
+}
+
+func Logout(c *gin.Context) {
+	utils.ExpireToken(c)
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }
