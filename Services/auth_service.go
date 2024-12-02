@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	config "project/Config"
@@ -113,13 +114,20 @@ func GoogleLogin(c *gin.Context) (string, models.User, error) {
 			return "", models.User{}, err
 		}
 	} else {
-		newUser = &models.User{Name: user.Name, Email: user.Email}
+		// var newUser models.User
+
+		err := config.UserCollection.FindOne(c, bson.M{"email": user.Email}).Decode(&newUser)
+		if err != nil {
+			defer config.HandleError(c, http.StatusBadRequest, "Invalid email or password", err)
+		}
 	}
+	fmt.Println(newUser.ID)
 
 	stringToken, err = utils.GenerateJWT(c, newUser) // Generate JWT
 	if err != nil {
 		defer config.HandleError(c, http.StatusInternalServerError, "Error generating token", err)
 		return "", models.User{}, err
 	}
+
 	return stringToken, *newUser, nil
 }
