@@ -17,8 +17,8 @@ func RequireAuth(c *gin.Context) {
 		defer c.AbortWithStatus(http.StatusUnauthorized)
 	}
 
-	var user models.User
-	err := repository.FindUserById(c, claims["sub"].(string), &user)
+	var user *models.User
+	user, err := repository.FindUserById(c, claims["sub"].(string))
 
 	if err != nil {
 		config.HandleError(c, http.StatusUnauthorized, "Unauthorized", err)
