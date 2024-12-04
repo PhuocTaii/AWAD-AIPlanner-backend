@@ -8,6 +8,7 @@ import (
 	"net/http"
 	config "project/Config"
 	models "project/Models"
+	auth "project/Models/Response/Auth"
 	repository "project/Repository"
 	utils "project/Utils"
 
@@ -44,10 +45,10 @@ func Register(ctx *gin.Context, user *models.User) (*models.User, error) {
 	return newUser, nil
 }
 
-func Login(ctx *gin.Context, email, password string) (string, models.User, error) {
-	var user models.User
+func Login(ctx *gin.Context, email, password string) (string, *models.User, error) {
+	var user *models.User
 
-	err := config.UserCollection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
+	user, err := repository.FindUserByEmail(ctx, email)
 	if err != nil {
 		defer config.HandleError(ctx, http.StatusBadRequest, "Invalid email or password", err)
 	}
@@ -57,7 +58,7 @@ func Login(ctx *gin.Context, email, password string) (string, models.User, error
 		defer config.HandleError(ctx, http.StatusBadRequest, "Invalid email or password", err)
 	}
 
-	stringToken, err := utils.GenerateJWT(ctx, &user)
+	stringToken, err := utils.GenerateJWT(ctx, user)
 	if err != nil {
 		defer config.HandleError(ctx, http.StatusInternalServerError, "Error generating token", err)
 	}
@@ -65,17 +66,7 @@ func Login(ctx *gin.Context, email, password string) (string, models.User, error
 	return stringToken, user, nil
 }
 
-type GoogleUser struct {
-	ID            string `json:"id"`
-	Email         string `json:"email"`
-	VerifiedEmail bool   `json:"verified_email"`
-	Name          string `json:"name"`
-	GivenName     string `json:"given_name"`
-	FamilyName    string `json:"family_name"`
-	Picture       string `json:"picture"`
-}
-
-func GoogleLogin(c *gin.Context) (string, models.User, error) {
+func GoogleLogin(c *gin.Context) (string, *models.User, error) {
 	state := c.Query("state")
 	if state != "randomstate" {
 		defer c.String(http.StatusBadRequest, "States don't Match!!")
@@ -97,7 +88,8 @@ func GoogleLogin(c *gin.Context) (string, models.User, error) {
 		defer c.String(http.StatusInternalServerError, "JSON Parsing Failed")
 	}
 	//Unmarshal the data into a struct
-	var user GoogleUser
+	var user auth.GoogleUser
+
 	err = json.Unmarshal(userData, &user)
 	if err != nil {
 		defer c.String(http.StatusInternalServerError, "JSON Decoding Failed")
@@ -105,29 +97,29 @@ func GoogleLogin(c *gin.Context) (string, models.User, error) {
 	var newUser *models.User
 	var stringToken string
 
-	err = repository.FindUserByEmail(c, user.Email, newUser) // Find user by email from google response
-	if err != nil {                                          // If user does not exist
+	newUser, err = repository.FindUserByEmail(c, user.Email) // Find user by email from google response
+
+	if err != nil {
 		tmp := &models.User{Name: user.Name, Email: user.Email}
 		newUser, err = repository.InsertUser(c, tmp) // Insert the user
 		if err != nil {
 			defer config.HandleError(c, http.StatusInternalServerError, "Error inserting user", err)
-			return "", models.User{}, err
+			return "", nil, err
 		}
 	} else {
-		// var newUser models.User
-
-		err := config.UserCollection.FindOne(c, bson.M{"email": user.Email}).Decode(&newUser)
-		if err != nil {
+		newUser, err := repository.FindUserByEmail(c, user.Email)
+		if newUser == nil {
 			defer config.HandleError(c, http.StatusBadRequest, "Invalid email or password", err)
 		}
 	}
-	fmt.Println(newUser.ID)
 
 	stringToken, err = utils.GenerateJWT(c, newUser) // Generate JWT
 	if err != nil {
 		defer config.HandleError(c, http.StatusInternalServerError, "Error generating token", err)
-		return "", models.User{}, err
+		return "", nil, err
 	}
 
-	return stringToken, *newUser, nil
+	fmt.Println(newUser.ID)
+
+	return stringToken, newUser, nil
 }
