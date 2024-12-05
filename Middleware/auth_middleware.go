@@ -21,8 +21,12 @@ func RequireAuth(c *gin.Context) {
 	user, err := repository.FindUserById(c, claims["sub"].(string))
 
 	if err != nil {
-		config.HandleError(c, http.StatusUnauthorized, "Unauthorized", err)
-		c.AbortWithStatus(http.StatusUnauthorized)
+		err := &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+		config.HandleError(c, err)
+		c.AbortWithStatus(err.Code)
 	}
 
 	c.Set("user", user)

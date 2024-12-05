@@ -14,7 +14,7 @@ import (
 
 var tokenBlacklist = make(map[string]bool)
 
-func GenerateJWT(ctx *gin.Context, user *models.User) (string, error) {
+func GenerateJWT(ctx *gin.Context, user *models.User) (string, *config.APIError) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": user.ID,
 		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), //token expires in 30 days
@@ -23,10 +23,15 @@ func GenerateJWT(ctx *gin.Context, user *models.User) (string, error) {
 	stringToken, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 
 	if err != nil {
-		defer config.HandleError(ctx, http.StatusInternalServerError, "Error generating token", err)
+		err := &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Error generating token",
+		}
+		defer config.HandleError(ctx, err)
+		return "", err
 	}
 
-	return stringToken, err
+	return stringToken, nil
 }
 
 func GetToken(ctx *gin.Context) string {
