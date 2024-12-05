@@ -11,5 +11,6 @@ func SetupUserRouter(apiGroup *gin.RouterGroup) {
 	user := apiGroup.Group("/user")
 	{
 		user.GET("/profile/:id", middleware.RequireAuth, controllers.UserProfile)
+		user.PUT("/profile/:id", middleware.RequireAuth, controllers.ChangeUserPassword)
 	}
 }

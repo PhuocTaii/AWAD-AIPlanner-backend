@@ -15,17 +15,19 @@ import (
 
 func Register(c *gin.Context) {
 	var request auth.RegisterRequest
-
 	if err := c.ShouldBindJSON(&request); err != nil {
-		config.HandleError(c, http.StatusBadRequest, "Invalid user data", err)
+		error := &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid user data",
+		}
+		config.HandleError(c, error)
 		return
 	}
-
 	user := models.User{Name: request.Name, Email: request.Email, Password: request.Password}
-
-	res, _ := services.Register(c, &user)
+	res, err := services.Register(c, &user)
 
 	if res == nil {
+		defer config.HandleError(c, err)
 		return
 	}
 
@@ -34,16 +36,18 @@ func Register(c *gin.Context) {
 
 func Login(c *gin.Context) {
 	var request auth.LoginRequest
-
 	if err := c.ShouldBindJSON(&request); err != nil {
-		config.HandleError(c, http.StatusBadRequest, "Invalid user data", err)
+		error := &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid user data",
+		}
+		config.HandleError(c, error)
 		return
 	}
-
 	token, user, err := services.Login(c, request.Email, request.Password)
 
-	if err != nil {
-		config.HandleError(c, http.StatusInternalServerError, "Failed to login", err)
+	if token == "" || user == nil {
+		defer config.HandleError(c, err)
 		return
 	}
 
@@ -63,14 +67,14 @@ func GoogleCallback(c *gin.Context) {
 	token, user, err := services.GoogleLogin(c)
 
 	if err != nil {
-		config.HandleError(c, http.StatusInternalServerError, "Failed to login", err)
+		config.HandleError(c, err)
 		return
 	}
 
 	// Convert user model to JSON string
-	userJSON, err := json.Marshal(user)
-	if err != nil {
-		config.HandleError(c, http.StatusInternalServerError, "Failed to parse user to JSON", err)
+	userJSON, error := json.Marshal(user)
+	if error != nil {
+		config.HandleError(c, err)
 		return
 	}
 

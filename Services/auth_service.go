@@ -17,82 +17,127 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Register(ctx *gin.Context, user *models.User) (*models.User, error) {
+func Register(ctx *gin.Context, user *models.User) (*models.User, *config.APIError) {
+
+	fmt.Println(user)
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		defer config.HandleError(ctx, http.StatusInternalServerError, "Error hashing password", err)
+		err := &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Error hashing password",
+		}
 		return nil, err
 	}
 
 	if config.UserCollection.FindOne(ctx, bson.M{"email": user.Email}).Err() == nil {
-		defer config.HandleError(ctx, http.StatusBadRequest, "Email already exists", nil)
+		err := &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Email already exists",
+		}
 		return nil, err
 	}
 
-	user = &models.User{
+	var tmp = &models.User{
 		Name:     user.Name,
 		Email:    user.Email,
 		Password: string(hash),
 	}
 
-	newUser, err := repository.InsertUser(ctx, user)
+	newUser, err := repository.InsertUser(ctx, tmp)
 
 	if err != nil {
-		defer config.HandleError(ctx, http.StatusInternalServerError, "Error inserting user", err)
+		err := &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Error inserting user",
+		}
 		return nil, err
 	}
 
 	return newUser, nil
 }
 
-func Login(ctx *gin.Context, email, password string) (string, *models.User, error) {
+func Login(ctx *gin.Context, email, password string) (string, *models.User, *config.APIError) {
 	var user *models.User
 
+	fmt.Println(email, password)
 	user, err := repository.FindUserByEmail(ctx, email)
 	if err != nil {
-		defer config.HandleError(ctx, http.StatusBadRequest, "Invalid email or password", err)
+		err := &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid email or password",
+		}
+		return "", nil, err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		defer config.HandleError(ctx, http.StatusBadRequest, "Invalid email or password", err)
+		err := &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid email or password",
+		}
+		return "", nil, err
 	}
 
-	stringToken, err := utils.GenerateJWT(ctx, user)
-	if err != nil {
-		defer config.HandleError(ctx, http.StatusInternalServerError, "Error generating token", err)
+	stringToken, error := utils.GenerateJWT(ctx, user)
+	if error != nil {
+		err := &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Error generating token",
+		}
+		return "", nil, err
 	}
 
 	return stringToken, user, nil
 }
 
-func GoogleLogin(c *gin.Context) (string, *models.User, error) {
+func GoogleLogin(c *gin.Context) (string, *models.User, *config.APIError) {
 	state := c.Query("state")
 	if state != "randomstate" {
-		defer c.String(http.StatusBadRequest, "States don't Match!!")
+		err := &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "States don't Match!!",
+		}
+		return "", nil, err
 	}
 
 	code := c.Query("code")
 	googlecon := config.GoogleConfig()
 	token, err := googlecon.Exchange(context.Background(), code)
 	if err != nil {
-		defer c.String(http.StatusInternalServerError, "Code-Token Exchange Failed")
+		err := &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Code-Token Exchange Failed",
+		}
+		return "", nil, err
 	}
 	//Get reponse body from google
 	resp, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
 	if err != nil {
-		defer c.String(http.StatusInternalServerError, "User Data Fetch Failed")
+		err := &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "User Data Fetch Failed",
+		}
+		return "", nil, err
 	}
 	userData, err := io.ReadAll(resp.Body)
 	if err != nil {
-		defer c.String(http.StatusInternalServerError, "JSON Parsing Failed")
+		err := &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "JSON Parsing Failed",
+		}
+		return "", nil, err
 	}
 	//Unmarshal the data into a struct
 	var user auth.GoogleUser
 
 	err = json.Unmarshal(userData, &user)
 	if err != nil {
-		defer c.String(http.StatusInternalServerError, "JSON Decoding Failed")
+		err := &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "JSON Decoding Failed",
+		}
+		return "", nil, err
 	}
 	var newUser *models.User
 	var stringToken string
@@ -100,26 +145,33 @@ func GoogleLogin(c *gin.Context) (string, *models.User, error) {
 	newUser, err = repository.FindUserByEmail(c, user.Email) // Find user by email from google response
 
 	if err != nil {
-		tmp := &models.User{Name: user.Name, Email: user.Email}
-		newUser, err = repository.InsertUser(c, tmp) // Insert the user
+		tmp := &models.User{Name: user.Name, Email: user.Email, GoogleID: user.ID} // Create a new user
+		newUser, err = repository.InsertUser(c, tmp)                               // Insert the user
 		if err != nil {
-			defer config.HandleError(c, http.StatusInternalServerError, "Error inserting user", err)
+			err := &config.APIError{
+				Code:    http.StatusInternalServerError,
+				Message: "Error inserting user",
+			}
 			return "", nil, err
 		}
 	} else {
-		newUser, err := repository.FindUserByEmail(c, user.Email)
-		if newUser == nil {
-			defer config.HandleError(c, http.StatusBadRequest, "Invalid email or password", err)
+		if newUser.GoogleID == "" {
+			err := &config.APIError{
+				Code:    http.StatusBadRequest,
+				Message: "Email already exists",
+			}
+			return "", nil, err
 		}
 	}
 
-	stringToken, err = utils.GenerateJWT(c, newUser) // Generate JWT
-	if err != nil {
-		defer config.HandleError(c, http.StatusInternalServerError, "Error generating token", err)
+	stringToken, _ = utils.GenerateJWT(c, newUser) // Generate JWT
+	if stringToken == "" {
+		err := &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Error generating token",
+		}
 		return "", nil, err
 	}
-
-	fmt.Println(newUser.ID)
 
 	return stringToken, newUser, nil
 }

@@ -10,14 +10,11 @@ type APIError struct {
 	Message string `json:"message"`
 }
 
-func HandleError(c *gin.Context, statusCode int, message string, err error) {
-	if err != nil {
-		c.Error(err) // Thêm lỗi vào gin context để dễ dàng quản lý sau này
-	}
+func HandleError(c *gin.Context, err *APIError) {
 
 	// Trả về mã lỗi và thông báo lỗi dưới dạng JSON
-	c.JSON(statusCode, APIError{
-		Code:    statusCode,
-		Message: message,
+	c.JSON(err.Code, APIError{
+		Code:    err.Code,
+		Message: err.Message,
 	})
 }

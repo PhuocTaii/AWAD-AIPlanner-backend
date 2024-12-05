@@ -19,6 +19,15 @@ func FindUserById(ctx *gin.Context, id string) (*models.User, error) {
 	return user, nil
 }
 
+func FindUserByIdAndGoogleID(ctx *gin.Context, id string, googleID string) (*models.User, error) {
+	var user *models.User
+	err := config.UserCollection.FindOne(ctx, bson.M{"_id": utils.ConvertObjectIDToString(id), "google_id": googleID}).Decode(&user)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 func FindUserByEmail(ctx *gin.Context, email string) (*models.User, error) {
 	var user *models.User
 	err := config.UserCollection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
@@ -29,17 +38,47 @@ func FindUserByEmail(ctx *gin.Context, email string) (*models.User, error) {
 }
 
 func InsertUser(ctx *gin.Context, user *models.User) (*models.User, error) {
-	res, err := config.UserCollection.InsertOne(ctx, user)
+	newUser := &models.User{
+		Name:      user.Name,
+		Email:     user.Email,
+		Password:  user.Password,
+		GoogleID:  user.GoogleID,
+		CreatedAt: primitive.DateTime(utils.GetCurrentTime()),
+		UpdatedAt: primitive.DateTime(utils.GetCurrentTime()),
+	}
+
+	res, err := config.UserCollection.InsertOne(ctx, newUser)
 	if err != nil {
 		return nil, err
 	}
 
-	newUser := &models.User{
-		ID:       res.InsertedID.(primitive.ObjectID),
-		Name:     user.Name,
-		Email:    user.Email,
-		Password: user.Password,
+	response := &models.User{
+		ID:        res.InsertedID.(primitive.ObjectID),
+		Name:      newUser.Name,
+		Email:     newUser.Email,
+		Password:  newUser.Password,
+		GoogleID:  newUser.GoogleID,
+		CreatedAt: newUser.CreatedAt,
+		UpdatedAt: newUser.UpdatedAt,
 	}
 
-	return newUser, nil
+	return response, nil
+}
+
+func UpdateUser(ctx *gin.Context, user *models.User) (*models.User, error) {
+	filter := bson.M{"_id": user.ID}
+	update := bson.M{"$set": bson.M{
+		"name":       user.Name,
+		"email":      user.Email,
+		"password":   user.Password,
+		"google_id":  user.GoogleID,
+		"updated_at": primitive.DateTime(utils.GetCurrentTime()),
+	}}
+
+	_, err := config.UserCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
