@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -12,6 +13,10 @@ import (
 var MongoClient *mongo.Client
 
 var UserCollection *mongo.Collection
+var TaskCollection *mongo.Collection
+var SubjectCollection *mongo.Collection
+var FocusLogCollection *mongo.Collection
+var TimerSettingsCollection *mongo.Collection
 
 func ConnectDB(dbUri string, dbName string) {
 	// Use the SetServerAPIOptions() method to set the Stable API version to 1
@@ -29,5 +34,9 @@ func ConnectDB(dbUri string, dbName string) {
 	}
 	fmt.Println("Pinged your deployment. You successfully connected to MongoDB!")
 
-	UserCollection = client.Database("AI_Planner").Collection("users")
+	UserCollection = client.Database(os.Getenv("DB_NAME")).Collection("users")
+	TaskCollection = client.Database(os.Getenv("DB_NAME")).Collection("tasks")
+	SubjectCollection = client.Database(os.Getenv("DB_NAME")).Collection("subjects")
+	FocusLogCollection = client.Database(os.Getenv("DB_NAME")).Collection("focus_logs")
+	TimerSettingsCollection = client.Database(os.Getenv("DB_NAME")).Collection("timer_settings")
 }

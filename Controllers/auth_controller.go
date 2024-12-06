@@ -7,6 +7,7 @@ import (
 	config "project/Config"
 	models "project/Models"
 	auth "project/Models/Request/Auth"
+	authResponse "project/Models/Response/Auth"
 	services "project/Services"
 	utils "project/Utils"
 
@@ -24,14 +25,19 @@ func Register(c *gin.Context) {
 		return
 	}
 	user := models.User{Name: request.Name, Email: request.Email, Password: request.Password}
-	res, err := services.Register(c, &user)
+	newUser, timerSetting, err := services.Register(c, &user)
 
-	if res == nil {
+	if err != nil {
 		defer config.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusCreated, res)
+	RegisterResponse := &authResponse.RegisterResponse{
+		User:         newUser,
+		TimerSetting: timerSetting,
+	}
+
+	c.JSON(http.StatusCreated, RegisterResponse)
 }
 
 func Login(c *gin.Context) {
@@ -64,7 +70,7 @@ func GoogleLogin(c *gin.Context) {
 }
 
 func GoogleCallback(c *gin.Context) {
-	token, user, err := services.GoogleLogin(c)
+	token, user, _, err := services.GoogleLogin(c)
 
 	if err != nil {
 		config.HandleError(c, err)

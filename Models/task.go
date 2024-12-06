@@ -20,4 +20,6 @@ type Task struct {
 	ActualEndTime      primitive.DateTime `bson:"actual_end_time" json:"actual_end_time"`
 	FocusTime          int                `bson:"focus_time" json:"focus_time"`
 	IsDeleted          bool               `bson:"is_deleted" json:"is_deleted"`
+	CreatedAt          primitive.DateTime `bson:"created_at" json:"created_at"`
+	UpdatedAt          primitive.DateTime `bson:"updated_at" json:"updated_at"`
 }
