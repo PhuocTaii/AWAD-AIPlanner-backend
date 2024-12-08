@@ -74,6 +74,7 @@ func UpdateUser(ctx *gin.Context, user *models.User) (*models.User, error) {
 		"email":      user.Email,
 		"password":   user.Password,
 		"google_id":  user.GoogleID,
+		"avatar":     user.Avatar,
 		"updated_at": primitive.DateTime(utils.GetCurrentTime()),
 	}}
 
