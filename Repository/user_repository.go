@@ -45,6 +45,7 @@ func InsertUser(ctx *gin.Context, user *models.User) (*models.User, error) {
 		GoogleID:  user.GoogleID,
 		CreatedAt: primitive.DateTime(utils.GetCurrentTime()),
 		UpdatedAt: primitive.DateTime(utils.GetCurrentTime()),
+		Avatar:    "https://res.cloudinary.com/dl6v6a4nk/image/upload/v1733640750/tz0unlvxxyrnbgyp9x0y.jpg",
 	}
 
 	res, err := config.UserCollection.InsertOne(ctx, newUser)
@@ -60,6 +61,7 @@ func InsertUser(ctx *gin.Context, user *models.User) (*models.User, error) {
 		GoogleID:  newUser.GoogleID,
 		CreatedAt: newUser.CreatedAt,
 		UpdatedAt: newUser.UpdatedAt,
+		Avatar:    newUser.Avatar,
 	}
 
 	return response, nil
@@ -72,6 +74,7 @@ func UpdateUser(ctx *gin.Context, user *models.User) (*models.User, error) {
 		"email":      user.Email,
 		"password":   user.Password,
 		"google_id":  user.GoogleID,
+		"avatar":     user.Avatar,
 		"updated_at": primitive.DateTime(utils.GetCurrentTime()),
 	}}
 
