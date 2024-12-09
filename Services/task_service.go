@@ -162,3 +162,31 @@ func GetPagingTask(c *gin.Context, limit, page int, filter, sort bson.M) ([]*mod
 	return tasks, totalPages, totalItems, nil
 
 }
+
+func DeleteTask(c *gin.Context, id string) (*models.Task, *config.APIError) {
+	//Get current user
+	curUser, err := utils.GetCurrentUser(c)
+	if err != nil {
+		return nil, err
+	}
+
+	task, _ := repository.FindTaskByIdAndUserId(c, id, curUser.ID.Hex())
+	if task == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusNotFound,
+			Message: "Task not found",
+		}
+	}
+
+	// Update task is_deleted to true
+	task.IsDeleted = true
+
+	res, _ := repository.DeleteTask(c, task)
+	if res == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Failed to delete task",
+		}
+	}
+	return res, nil
+}

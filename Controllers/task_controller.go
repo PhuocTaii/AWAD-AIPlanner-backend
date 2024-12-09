@@ -108,3 +108,13 @@ func GetTasks(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+
+func DeleteTask(c *gin.Context) {
+	var taskId = c.Param("id")
+	res, err := services.DeleteTask(c, taskId)
+	if err != nil {
+		defer config.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}

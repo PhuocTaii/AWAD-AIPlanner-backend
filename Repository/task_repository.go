@@ -87,3 +87,13 @@ func UpdateTask(ctx *gin.Context, task *models.Task) (*models.Task, error) {
 
 	return task, nil
 }
+
+func DeleteTask(ctx *gin.Context, task *models.Task) (*models.Task, error) {
+	filter := bson.M{"_id": task.ID}
+	update := bson.M{"$set": bson.M{"is_deleted": true}}
+	_, err := config.TaskCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+	return task, nil
+}
