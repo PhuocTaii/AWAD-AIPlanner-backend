@@ -32,6 +32,13 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*models.Task, *
 		}
 	}
 
+	if request.EstimatedStartTime > request.EstimatedEndTime {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid estimated start time and estimated end time",
+		}
+	}
+
 	// Create task
 	task := &models.Task{
 		Name:               request.Name,
@@ -54,3 +61,7 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*models.Task, *
 	}
 	return res, nil
 }
+
+// func ExpiredTask() *config.APIError{
+// 	//
+// }

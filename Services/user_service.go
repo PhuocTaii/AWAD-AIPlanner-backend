@@ -6,15 +6,22 @@ import (
 	config "project/Config"
 	models "project/Models"
 	repository "project/Repository"
+	utils "project/Utils"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func UserProfile(ctx *gin.Context, userId string) (*models.User, *config.APIError) {
-	var user *models.User
+func UserProfile(ctx *gin.Context) (*models.User, *config.APIError) {
+	curUser, _ := utils.GetCurrentUser(ctx)
+	if curUser == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+	}
 
-	user, err := repository.FindUserById(ctx, userId)
+	user, err := repository.FindUserById(ctx, curUser.ID.Hex())
 
 	if err != nil {
 		return nil, &config.APIError{
@@ -26,15 +33,28 @@ func UserProfile(ctx *gin.Context, userId string) (*models.User, *config.APIErro
 	return user, nil
 }
 
-func ChangeUserPassword(ctx *gin.Context, userId string, newPassword string) (*models.User, *config.APIError) {
-	var user *models.User
+func ChangeUserPassword(ctx *gin.Context, oldPassword string, newPassword string) (*models.User, *config.APIError) {
+	curUser, _ := utils.GetCurrentUser(ctx)
+	if curUser == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+	}
 
-	user, err := repository.FindUserByIdAndGoogleID(ctx, userId, "")
+	user, err := repository.FindUserById(ctx, curUser.ID.Hex())
 
 	if err != nil {
 		return nil, &config.APIError{
 			Code:    http.StatusNotFound,
 			Message: "User not found",
+		}
+	}
+
+	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(oldPassword)) != nil {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Old password is incorrect",
 		}
 	}
 
@@ -67,10 +87,18 @@ func ChangeUserPassword(ctx *gin.Context, userId string, newPassword string) (*m
 	return user, nil
 }
 
-func ModifyAvatar(ctx *gin.Context, userId string, file multipart.File, filePath string) (string, *config.APIError) {
-	var user *models.User
+func ModifyAvatar(ctx *gin.Context, file multipart.File, filePath string) (string, *config.APIError) {
+	curUser, _ := utils.GetCurrentUser(ctx)
+	if curUser == nil {
+		return "", &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+	}
 
-	user, err := repository.FindUserById(ctx, userId)
+	user, err := repository.FindUserById(ctx, curUser.ID.Hex())
+
+	// user, err := repository.FindUserById(ctx, userId)
 	if user == nil {
 		return "", &config.APIError{
 			Code:    http.StatusNotFound,
@@ -105,10 +133,15 @@ func ModifyAvatar(ctx *gin.Context, userId string, file multipart.File, filePath
 	return imageUrl, nil
 }
 
-func UpdateUserProfile(ctx *gin.Context, userId string, newName string) (*models.User, *config.APIError) {
-	var user *models.User
-
-	user, err := repository.FindUserById(ctx, userId)
+func UpdateUserProfile(ctx *gin.Context, newName string) (*models.User, *config.APIError) {
+	curUser, _ := utils.GetCurrentUser(ctx)
+	if curUser == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+	}
+	user, err := repository.FindUserById(ctx, curUser.ID.Hex())
 	if err != nil {
 		return nil, &config.APIError{
 			Code:    http.StatusNotFound,

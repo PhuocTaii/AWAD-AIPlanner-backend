@@ -19,7 +19,7 @@ func SetupRouter() *gin.Engine {
 		routes.SetupUserRouter(api)
 		routes.SetupTaskRouter(api)
 		routes.SetupSubjectRouter(api)
-		// routes.SetupTimeSettingRouter(api)
+		routes.SetupTimeSettingRouter(api)
 	}
 
 	return r

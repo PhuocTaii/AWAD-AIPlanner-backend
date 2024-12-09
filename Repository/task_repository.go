@@ -12,7 +12,7 @@ import (
 
 func FindTaskById(ctx *gin.Context, id string) (*models.Task, error) {
 	var task *models.Task
-	err := config.TaskCollection.FindOne(ctx, bson.M{"_id": utils.ConvertObjectIDToString(id)}).Decode(&task)
+	err := config.TaskCollection.FindOne(ctx, bson.M{"_id": utils.ConvertStringToObjectID(id)}).Decode(&task)
 	if err != nil {
 		return nil, err
 	}
