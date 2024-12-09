@@ -1,5 +1,6 @@
 package user
 
 type ChangePasswordRequest struct {
-	Password string `json:"password" binding:"required"`
+	OldPassword string `json:"old_password" binding:"required"`
+	Password    string `json:"password" binding:"required, min=8"`
 }

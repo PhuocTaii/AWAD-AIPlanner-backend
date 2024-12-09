@@ -12,7 +12,7 @@ import (
 
 func FindUserById(ctx *gin.Context, id string) (*models.User, error) {
 	var user *models.User
-	err := config.UserCollection.FindOne(ctx, bson.M{"_id": utils.ConvertObjectIDToString(id)}).Decode(&user)
+	err := config.UserCollection.FindOne(ctx, bson.M{"_id": utils.ConvertStringToObjectID(id)}).Decode(&user)
 	if err != nil {
 		return nil, err
 	}
@@ -21,7 +21,7 @@ func FindUserById(ctx *gin.Context, id string) (*models.User, error) {
 
 func FindUserByIdAndGoogleID(ctx *gin.Context, id string, googleID string) (*models.User, error) {
 	var user *models.User
-	err := config.UserCollection.FindOne(ctx, bson.M{"_id": utils.ConvertObjectIDToString(id), "google_id": googleID}).Decode(&user)
+	err := config.UserCollection.FindOne(ctx, bson.M{"_id": utils.ConvertStringToObjectID(id), "google_id": googleID}).Decode(&user)
 	if err != nil {
 		return nil, err
 	}

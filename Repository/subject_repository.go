@@ -12,7 +12,7 @@ import (
 
 func FindSubjectById(ctx *gin.Context, id string) (*models.Subject, error) {
 	var subject *models.Subject
-	err := config.SubjectCollection.FindOne(ctx, bson.M{"_id": utils.ConvertObjectIDToString(id)}).Decode(&subject)
+	err := config.SubjectCollection.FindOne(ctx, bson.M{"_id": utils.ConvertStringToObjectID(id)}).Decode(&subject)
 	if err != nil {
 		return nil, err
 	}

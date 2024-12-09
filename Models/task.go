@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -16,8 +18,8 @@ type Task struct {
 	Status             int                `bson:"status" json:"status"`
 	EstimatedStartTime primitive.DateTime `bson:"estimated_start_time" json:"estimated_start_time"`
 	EstimatedEndTime   primitive.DateTime `bson:"estimated_end_time" json:"estimated_end_time"`
-	ActualStartTime    primitive.DateTime `bson:"actual_start_time" json:"actual_start_time"`
-	ActualEndTime      primitive.DateTime `bson:"actual_end_time" json:"actual_end_time"`
+	ActualStartTime    *time.Time         `bson:"actual_start_time" json:"actual_start_time"`
+	ActualEndTime      *time.Time         `bson:"actual_end_time" json:"actual_end_time"`
 	FocusTime          int                `bson:"focus_time" json:"focus_time"`
 	IsDeleted          bool               `bson:"is_deleted" json:"is_deleted"`
 	CreatedAt          primitive.DateTime `bson:"created_at" json:"created_at"`

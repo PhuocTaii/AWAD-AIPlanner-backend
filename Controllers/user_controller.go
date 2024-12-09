@@ -11,26 +11,25 @@ import (
 )
 
 func UserProfile(c *gin.Context) {
-	userId := c.Param("id")
-	user, _ := services.UserProfile(c, userId)
-	if user == nil {
+	user, err := services.UserProfile(c)
+	if err != nil {
+		defer config.HandleError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, user)
 }
 
 func ChangeUserPassword(c *gin.Context) {
-	userId := c.Param("id")
 	var request user.ChangePasswordRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		error := &config.APIError{
 			Code:    http.StatusBadRequest,
 			Message: "Invalid user data",
 		}
-		config.HandleError(c, error)
+		defer config.HandleError(c, error)
 		return
 	}
-	user, err := services.ChangeUserPassword(c, userId, request.Password)
+	user, err := services.ChangeUserPassword(c, request.OldPassword, request.Password)
 	if err != nil {
 		defer config.HandleError(c, err)
 		return
@@ -39,10 +38,9 @@ func ChangeUserPassword(c *gin.Context) {
 }
 
 func ModifyAvatar(c *gin.Context) {
-	userId := c.Param("id")
 	file, _ := c.Get("file")
 	filePath, _ := c.Get("filePath")
-	imageUrl, err := services.ModifyAvatar(c, userId, file.(multipart.File), filePath.(string))
+	imageUrl, err := services.ModifyAvatar(c, file.(multipart.File), filePath.(string))
 	if err != nil {
 		defer config.HandleError(c, err)
 		return
@@ -53,7 +51,7 @@ func ModifyAvatar(c *gin.Context) {
 }
 
 func UpdateUserProfile(c *gin.Context) {
-	userId := c.Param("id")
+	// userId := c.Param("id")
 	var request user.UpdateProfileRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		error := &config.APIError{
@@ -63,7 +61,7 @@ func UpdateUserProfile(c *gin.Context) {
 		config.HandleError(c, error)
 		return
 	}
-	user, err := services.UpdateUserProfile(c, userId, request.Name)
+	user, err := services.UpdateUserProfile(c, request.Name)
 	if err != nil {
 		defer config.HandleError(c, err)
 		return

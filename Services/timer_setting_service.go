@@ -1,9 +1,11 @@
 package services
 
 import (
+	"net/http"
 	config "project/Config"
 	models "project/Models"
 	repository "project/Repository"
+	utils "project/Utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,4 +27,24 @@ func CreateTimerSetting(c *gin.Context, curUser *models.User) (*models.TimerSett
 		}
 	}
 	return res, nil
+}
+
+func GetTimeSetting(ctx *gin.Context) (*models.TimerSetting, *config.APIError) {
+	curUser, _ := utils.GetCurrentUser(ctx)
+	if curUser == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+	}
+
+	timerSetting, _ := repository.GetTimerSettingByUserId(ctx, curUser.ID.Hex())
+	if timerSetting == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusNotFound,
+			Message: "Timer setting not found",
+		}
+	}
+
+	return timerSetting, nil
 }

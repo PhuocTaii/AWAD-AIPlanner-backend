@@ -6,6 +6,7 @@ import (
 	utils "project/Utils"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -37,4 +38,14 @@ func InsertTimerSetting(ctx *gin.Context, timerSetting *models.TimerSetting) (*m
 	}
 
 	return response, nil
+}
+
+func GetTimerSettingByUserId(ctx *gin.Context, userId string) (*models.TimerSetting, error) {
+	var timerSetting models.TimerSetting
+	err := config.TimerSettingsCollection.FindOne(ctx, bson.M{"user._id": utils.ConvertStringToObjectID(userId)}).Decode(&timerSetting)
+	if err != nil {
+		return nil, err
+	}
+
+	return &timerSetting, nil
 }

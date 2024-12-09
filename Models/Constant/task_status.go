@@ -7,6 +7,7 @@ const (
 	InProgress
 	Completed
 	Expired
+	Deleted
 )
 
 func StatusToString(status int) string {
