@@ -58,3 +58,32 @@ func InsertTask(ctx *gin.Context, task *models.Task) (*models.Task, error) {
 
 	return response, nil
 }
+
+func FindTaskByIdAndUserId(ctx *gin.Context, id string, userId string) (*models.Task, error) {
+	var task *models.Task
+	err := config.TaskCollection.FindOne(ctx, bson.M{"_id": utils.ConvertStringToObjectID(id), "user._id": utils.ConvertStringToObjectID(userId)}).Decode(&task)
+	if err != nil {
+		return nil, err
+	}
+	return task, nil
+}
+
+func UpdateTask(ctx *gin.Context, task *models.Task) (*models.Task, error) {
+	filter := bson.M{"_id": task.ID}
+	update := bson.M{"$set": bson.M{
+		"name":                 task.Name,
+		"description":          task.Description,
+		"subject":              task.Subject,
+		"status":               task.Status,
+		"priority":             task.Priority,
+		"estimated_start_time": task.EstimatedStartTime,
+		"estimated_end_time":   task.EstimatedEndTime,
+	}}
+
+	_, err := config.TaskCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+
+	return task, nil
+}
