@@ -10,6 +10,7 @@ import (
 	utils "project/Utils"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*models.Task, *config.APIError) {
@@ -145,4 +146,19 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*mod
 		}
 	}
 	return res, nil
+}
+
+func GetPagingTask(c *gin.Context, limit, page int, filter, sort bson.M) ([]*models.Task, int, int, *config.APIError) {
+	paginateConfig := config.NewPagingConfig(c, limit, page)
+
+	tasks, totalPages, totalItems, err := config.PaginatedFind[*models.Task](c, config.TaskCollection, paginateConfig, filter, sort)
+	if err != nil {
+		return nil, 0, 0, &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to get tasks",
+		}
+	}
+
+	return tasks, totalPages, totalItems, nil
+
 }
