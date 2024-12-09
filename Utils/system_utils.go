@@ -13,6 +13,11 @@ func GetCurrentTime() int64 {
 	return time.Now().UnixNano() / int64(time.Millisecond)
 }
 
+func GetCurrent() *time.Time {
+	now := time.Now()
+	return &now
+}
+
 func GetCurrentUser(c *gin.Context) (*models.User, *config.APIError) {
 	// var user *models.User
 

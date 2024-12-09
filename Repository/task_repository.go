@@ -78,6 +78,8 @@ func UpdateTask(ctx *gin.Context, task *models.Task) (*models.Task, error) {
 		"priority":             task.Priority,
 		"estimated_start_time": task.EstimatedStartTime,
 		"estimated_end_time":   task.EstimatedEndTime,
+		"actual_start_time":    task.ActualStartTime,
+		"actual_end_time":      task.ActualEndTime,
 	}}
 
 	_, err := config.TaskCollection.UpdateOne(ctx, filter, update)
