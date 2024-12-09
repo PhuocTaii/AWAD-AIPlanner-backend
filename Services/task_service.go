@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"net/http"
 	config "project/Config"
 	models "project/Models"
@@ -78,6 +79,14 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*mod
 		}
 	}
 
+	//cannot modify task to expired
+	if request.Status == "Expired" {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Cannot modify task to expired",
+		}
+	}
+
 	// Modify task
 	if request.Name == "" {
 		request.Name = task.Name
@@ -132,10 +141,44 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*mod
 	task.Name = request.Name
 	task.Description = request.Description
 	task.Priority = priority
-	task.Status = status
 	task.Subject = *subject
 	task.EstimatedStartTime = request.EstimatedStartTime
 	task.EstimatedEndTime = request.EstimatedEndTime
+
+	//cannot modify status of expired task
+	if task.Status == constant.Expired {
+		fmt.Println("hello, this is thanh vân")
+		//check valid new estimated start and end time
+
+		if task.ActualStartTime == nil || task.ActualStartTime.After(*utils.GetCurrent()) {
+			task.Status = constant.ToDo
+		} else {
+			task.Status = constant.InProgress
+		}
+	} else {
+		//if change status to completed, set actual end time
+		if status == constant.Completed {
+			task.ActualEndTime = utils.GetCurrent()
+			//if change status from to do to completed, set actual start time to current time
+			if task.Status == constant.ToDo {
+				task.ActualStartTime = utils.GetCurrent()
+			}
+		}
+		//if change status to to do, set actual start time and end time to nil
+		if status == constant.ToDo {
+			task.ActualStartTime = nil
+			task.ActualEndTime = nil
+		}
+		//if change status to in progress, set actual start time to current time
+		if status == constant.InProgress {
+			task.ActualStartTime = utils.GetCurrent()
+			if task.Status == constant.Completed {
+				task.ActualEndTime = nil
+			}
+		}
+
+		task.Status = status
+	}
 
 	// Update task
 	res, _ := repository.UpdateTask(c, task)
