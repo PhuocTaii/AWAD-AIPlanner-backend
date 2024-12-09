@@ -13,7 +13,7 @@ type Task struct {
 	//Reference to subject
 	Subject Subject `bson:"subject" json:"subject"`
 	User    User    `bson:"user" json:"user"`
-	//Priority of the task using enum
+	//Priority and Status of the task using enum
 	Priority           int                `bson:"priority" json:"priority"`
 	Status             int                `bson:"status" json:"status"`
 	EstimatedStartTime primitive.DateTime `bson:"estimated_start_time" json:"estimated_start_time"`
