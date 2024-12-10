@@ -56,7 +56,7 @@ func ExpireToken(ctx *gin.Context) {
 	// Optionally, you can also set the expiration claim
 	claims["exp"] = time.Now().Add(-time.Hour).Unix()
 
-	ctx.JSON(http.StatusOK, gin.H{"expired": claims["exp"]})
+	// ctx.JSON(http.StatusOK, gin.H{"expired": claims["exp"]})
 }
 
 func isTokenBlacklisted(tokenString string) bool {

@@ -58,8 +58,9 @@ func Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"token": token,
-		"user":  user,
+		"message": "Login successful!",
+		"token":   token,
+		"user":    user,
 	})
 }
 
@@ -90,5 +91,5 @@ func GoogleCallback(c *gin.Context) {
 
 func Logout(c *gin.Context) {
 	utils.ExpireToken(c)
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
+	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully!"})
 }
