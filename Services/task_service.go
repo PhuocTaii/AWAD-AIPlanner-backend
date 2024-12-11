@@ -21,6 +21,13 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*models.Task, *
 		return nil, err
 	}
 
+	if request.EstimatedStartTime > request.EstimatedEndTime {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid estimated start time and estimated end time",
+		}
+	}
+
 	subject, err := FindSubjectById(c, request.SubjectId)
 	if err != nil {
 		return nil, err
