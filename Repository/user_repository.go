@@ -19,9 +19,9 @@ func FindUserById(ctx *gin.Context, id string) (*models.User, error) {
 	return user, nil
 }
 
-func FindVerifiedUserByEmail(ctx *gin.Context, email string) (*models.User, error) {
+func FindUserByEmailAndVerification(ctx *gin.Context, email string, isVerified bool) (*models.User, error) {
 	var user *models.User
-	filter := bson.M{"email": email, "is_verified": true}
+	filter := bson.M{"email": email, "is_verified": isVerified}
 	err := config.UserCollection.FindOne(ctx, filter).Decode(&user)
 	if err != nil {
 		return nil, err
