@@ -13,7 +13,6 @@ import (
 	utils "project/Utils"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -60,7 +59,7 @@ import (
 func Login(ctx *gin.Context, email, password string) (string, *models.User, *config.APIError) {
 	var user *models.User
 
-	user, err := repository.FindVerifiedUserByEmail(ctx, email)
+	user, err := repository.FindUserByEmailAndVerification(ctx, email, true)
 	if err != nil {
 		return "", nil, &config.APIError{
 			Code:    http.StatusBadRequest,
@@ -134,7 +133,7 @@ func GoogleLogin(c *gin.Context) (string, *models.User, *models.TimerSetting, *c
 	var stringToken string
 	var timerSetting *models.TimerSetting
 
-	newUser, err = repository.FindVerifiedUserByEmail(c, user.Email) // Find user by email from google response
+	newUser, err = repository.FindUserByEmailAndVerification(c, user.Email, true) // Find user by email from google response
 
 	if err != nil {
 		verficatonCode := generateVerifcationCode()
@@ -190,7 +189,7 @@ func Register(ctx *gin.Context, user *models.User) *config.APIError {
 		}
 	}
 
-	if config.UserCollection.FindOne(ctx, bson.M{"email": user.Email}).Err() == nil {
+	if _, err := repository.FindUserByEmailAndVerification(ctx, user.Email, true); err == nil {
 		return &config.APIError{
 			Code:    http.StatusBadRequest,
 			Message: "Email already exists",
