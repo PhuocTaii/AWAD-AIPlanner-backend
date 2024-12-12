@@ -20,6 +20,7 @@ func SetupRouter() *gin.Engine {
 		routes.SetupTaskRouter(api)
 		routes.SetupSubjectRouter(api)
 		routes.SetupTimeSettingRouter(api)
+		routes.SetupAiRouter(api)
 	}
 
 	return r
