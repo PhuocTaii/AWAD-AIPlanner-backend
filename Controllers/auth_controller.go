@@ -7,38 +7,37 @@ import (
 	config "project/Config"
 	models "project/Models"
 	auth "project/Models/Request/Auth"
-	authResponse "project/Models/Response/Auth"
 	services "project/Services"
 	utils "project/Utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-func Register(c *gin.Context) {
-	var request auth.RegisterRequest
-	if err := c.ShouldBindJSON(&request); err != nil {
-		error := &config.APIError{
-			Code:    http.StatusBadRequest,
-			Message: "Invalid user data",
-		}
-		config.HandleError(c, error)
-		return
-	}
-	user := models.User{Name: request.Name, Email: request.Email, Password: request.Password}
-	newUser, timerSetting, err := services.Register(c, &user)
+// func Register(c *gin.Context) {
+// var request auth.RegisterRequest
+// if err := c.ShouldBindJSON(&request); err != nil {
+// 	error := &config.APIError{
+// 		Code:    http.StatusBadRequest,
+// 		Message: "Invalid user data",
+// 	}
+// 	config.HandleError(c, error)
+// 	return
+// }
+// user := models.User{Name: request.Name, Email: request.Email, Password: request.Password}
+// newUser, timerSetting, err := services.Register(c, &user)
 
-	if err != nil {
-		defer config.HandleError(c, err)
-		return
-	}
+// if err != nil {
+// 	defer config.HandleError(c, err)
+// 	return
+// }
 
-	RegisterResponse := &authResponse.RegisterResponse{
-		User:         newUser,
-		TimerSetting: timerSetting,
-	}
+// RegisterResponse := &authResponse.RegisterResponse{
+// 	User:         newUser,
+// 	TimerSetting: timerSetting,
+// }
 
-	c.JSON(http.StatusCreated, RegisterResponse)
-}
+// c.JSON(http.StatusCreated, RegisterResponse)
+// }
 
 func Login(c *gin.Context) {
 	var request auth.LoginRequest
@@ -92,4 +91,49 @@ func GoogleCallback(c *gin.Context) {
 func Logout(c *gin.Context) {
 	utils.ExpireToken(c)
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully!"})
+}
+
+func Register(c *gin.Context) {
+	var request auth.RegisterRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		error := &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid user data",
+		}
+		config.HandleError(c, error)
+		return
+	}
+	user := models.User{Name: request.Name, Email: request.Email, Password: request.Password}
+	err := services.Register(c, &user)
+
+	if err != nil {
+		config.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "User registered successfully!",
+	})
+
+	// if err != nil {
+	// 	defer config.HandleError(c, err)
+	// 	return
+	// }
+
+	// RegisterResponse := &authResponse.RegisterResponse{
+	// 	User:         newUser,
+	// 	TimerSetting: timerSetting,
+	// }
+
+	// c.JSON(http.StatusCreated, RegisterResponse)
+}
+
+func Verify(c *gin.Context) {
+	code := c.Query("code")
+	err := services.Verify(c, code)
+	if err != nil {
+		config.HandleError(c, err)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, os.Getenv("CLIENT_URL")+"/login")
 }
