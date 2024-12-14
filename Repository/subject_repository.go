@@ -19,6 +19,18 @@ func FindSubjectById(ctx *gin.Context, id string) (*models.Subject, error) {
 	return subject, nil
 }
 
+func FindAllUserSubject(ctx *gin.Context, userId string) ([]models.Subject, error) {
+	cursor, err := config.SubjectCollection.Find(ctx, bson.M{"user._id": utils.ConvertStringToObjectID(userId), "is_deleted": false})
+	if err != nil {
+		return nil, err
+	}
+	var subjects []models.Subject
+	if err = cursor.All(ctx, &subjects); err != nil {
+		return nil, err
+	}
+	return subjects, nil
+}
+
 func InsertSubject(ctx *gin.Context, subject *models.Subject) (*models.Subject, error) {
 	newSubject := &models.Subject{
 		Name:      subject.Name,

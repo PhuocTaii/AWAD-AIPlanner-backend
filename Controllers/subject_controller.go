@@ -27,3 +27,12 @@ func CreateSubject(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, task)
 }
+
+func GetSubjects(c *gin.Context) {
+	tasks, err := services.GetSubjects(c)
+	if err != nil {
+		defer config.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, tasks)
+}

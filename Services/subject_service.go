@@ -11,10 +11,28 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func GetSubjects(c *gin.Context) ([]models.Subject, *config.APIError) {
+	curUser, _ := utils.GetCurrentUser(c)
+	if curUser == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+	}
+	subjects, err := repository.FindAllUserSubject(c, curUser.ID.Hex())
+	if err != nil {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Subjects not found",
+		}
+	}
+	return subjects, nil
+}
+
 func CreateSubject(c *gin.Context, request subject.CreateSubjectRequest) (*models.Subject, *config.APIError) {
 	//Get current user
-	curUser, err := utils.GetCurrentUser(c)
-	if err != nil {
+	curUser, _ := utils.GetCurrentUser(c)
+	if curUser == nil {
 		return nil, &config.APIError{
 			Code:    http.StatusUnauthorized,
 			Message: "Unauthorized",

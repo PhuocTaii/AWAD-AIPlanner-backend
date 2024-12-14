@@ -17,8 +17,8 @@ import (
 
 func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*models.Task, *config.APIError) {
 	//Get current user
-	curUser, err := utils.GetCurrentUser(c)
-	if err != nil {
+	curUser, _ := utils.GetCurrentUser(c)
+	if curUser == nil {
 		return nil, &config.APIError{
 			Code:    http.StatusUnauthorized,
 			Message: "Unauthorized",
@@ -77,9 +77,12 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*models.Task, *
 
 func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*models.Task, *config.APIError) {
 	//Get current user
-	curUser, err := utils.GetCurrentUser(c)
-	if err != nil {
-		return nil, err
+	curUser, _ := utils.GetCurrentUser(c)
+	if curUser == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
 	}
 
 	task, _ := repository.FindTaskByIdAndUserId(c, id, curUser.ID.Hex())
@@ -251,9 +254,12 @@ func GetPagingTask(c *gin.Context, limit, page int, filter, sort bson.M) ([]*res
 
 func DeleteTask(c *gin.Context, id string) (*models.Task, *config.APIError) {
 	//Get current user
-	curUser, err := utils.GetCurrentUser(c)
-	if err != nil {
-		return nil, err
+	curUser, _ := utils.GetCurrentUser(c)
+	if curUser == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
 	}
 
 	task, _ := repository.FindTaskByIdAndUserId(c, id, curUser.ID.Hex())
