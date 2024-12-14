@@ -1,12 +1,14 @@
 package task
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"time"
+)
 
 type CreateTaskRequest struct {
-	Name               string             `json:"name" binding:"required"`
-	Description        string             `json:"description" binding:"required"`
-	SubjectId          string             `json:"subject_id" binding:"required"`
-	Priority           string             `json:"priority" binding:"required"`
-	EstimatedStartTime primitive.DateTime `json:"estimated_start_time"`
-	EstimatedEndTime   primitive.DateTime `json:"estimated_end_time"`
+	Name               string     `json:"name" binding:"required"`
+	Description        string     `json:"description" binding:"required"`
+	SubjectId          string     `json:"subject_id" binding:"required"`
+	Priority           string     `json:"priority" binding:"required"`
+	EstimatedStartTime *time.Time `json:"estimated_start_time"`
+	EstimatedEndTime   *time.Time `json:"estimated_end_time"`
 }

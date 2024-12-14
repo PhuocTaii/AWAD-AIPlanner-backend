@@ -95,8 +95,8 @@ func InsertUser(ctx *gin.Context, user *models.User) (*models.User, error) {
 		GoogleID:         user.GoogleID,
 		IsVerified:       user.IsVerified,
 		VerificationCode: user.VerificationCode,
-		CreatedAt:        primitive.DateTime(utils.GetCurrentTime()),
-		UpdatedAt:        primitive.DateTime(utils.GetCurrentTime()),
+		CreatedAt:        utils.GetCurrent(),
+		UpdatedAt:        utils.GetCurrent(),
 		Avatar:           "https://res.cloudinary.com/dl6v6a4nk/image/upload/v1733640750/tz0unlvxxyrnbgyp9x0y.jpg",
 	}
 

@@ -17,8 +17,8 @@ func InsertTimerSetting(ctx *gin.Context, timerSetting *models.TimerSetting) (*m
 		ShortBreak: timerSetting.ShortBreak,
 		LongBreak:  timerSetting.LongBreak,
 		Interval:   timerSetting.Interval,
-		CreatedAt:  primitive.DateTime(utils.GetCurrentTime()),
-		UpdatedAt:  primitive.DateTime(utils.GetCurrentTime()),
+		CreatedAt:  utils.GetCurrent(),
+		UpdatedAt:  utils.GetCurrent(),
 	}
 
 	res, err := config.TimerSettingsCollection.InsertOne(ctx, newTimerSetting)
