@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*models.Task, *config.APIError) {
+func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.GetTaskResponse, *config.APIError) {
 	//Get current user
 	curUser, _ := utils.GetCurrentUser(c)
 	if curUser == nil {
@@ -72,10 +72,29 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*models.Task, *
 			Message: "Failed to create task",
 		}
 	}
-	return res, nil
+
+	response := &responseTask.GetTaskResponse{
+		ID:                 res.ID,
+		Name:               res.Name,
+		Description:        res.Description,
+		Subject:            res.Subject,
+		User:               res.User,
+		Priority:           constant.PriorityToString(res.Priority),
+		Status:             constant.StatusToString(res.Status),
+		EstimatedStartTime: res.EstimatedStartTime,
+		EstimatedEndTime:   res.EstimatedEndTime,
+		ActualStartTime:    res.ActualStartTime,
+		ActualEndTime:      res.ActualEndTime,
+		FocusTime:          res.FocusTime,
+		IsDeleted:          res.IsDeleted,
+		CreatedAt:          res.CreatedAt,
+		UpdatedAt:          res.UpdatedAt,
+	}
+
+	return response, nil
 }
 
-func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*models.Task, *config.APIError) {
+func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*responseTask.GetTaskResponse, *config.APIError) {
 	//Get current user
 	curUser, _ := utils.GetCurrentUser(c)
 	if curUser == nil {
@@ -202,7 +221,26 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*mod
 			Message: "Failed to update task",
 		}
 	}
-	return res, nil
+
+	response := &responseTask.GetTaskResponse{
+		ID:                 res.ID,
+		Name:               res.Name,
+		Description:        res.Description,
+		Subject:            res.Subject,
+		User:               res.User,
+		Priority:           constant.PriorityToString(res.Priority),
+		Status:             constant.StatusToString(res.Status),
+		EstimatedStartTime: res.EstimatedStartTime,
+		EstimatedEndTime:   res.EstimatedEndTime,
+		ActualStartTime:    res.ActualStartTime,
+		ActualEndTime:      res.ActualEndTime,
+		FocusTime:          res.FocusTime,
+		IsDeleted:          res.IsDeleted,
+		CreatedAt:          res.CreatedAt,
+		UpdatedAt:          res.UpdatedAt,
+	}
+
+	return response, nil
 }
 
 func GetPagingTask(c *gin.Context, limit, page int, filter, sort bson.M) ([]*responseTask.GetTaskResponse, int, int, *config.APIError) {
