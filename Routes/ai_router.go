@@ -10,6 +10,6 @@ import (
 func SetupAiRouter(apiGroup *gin.RouterGroup) {
 	ai := apiGroup.Group("/ai")
 	{
-		ai.GET("/create", middleware.RequireAuth, controllers.CreatePlan)
+		ai.GET("/feedback", middleware.RequireAuth, controllers.Feedback)
 	}
 }
