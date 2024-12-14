@@ -37,11 +37,7 @@ func PaginatedFind[T any](ctx *gin.Context, collection *mongo.Collection, config
 	findOptions.SetLimit(int64(config.Limit)) // Giới hạn số lượng kết quả trả về
 	if sort != nil {
 		findOptions.SetSort(sort) // Sắp xếp kết quả nếu cần
-		//handle mongoDB sort
-
 	}
-
-	// fmt.Println("Sort: ", sort)
 
 	// Lấy dữ liệu từ collection
 	cursor, err := collection.Find(ctx, filter, findOptions)
@@ -50,7 +46,7 @@ func PaginatedFind[T any](ctx *gin.Context, collection *mongo.Collection, config
 	}
 	defer cursor.Close(ctx)
 
-	totalItems, err := collection.CountDocuments(ctx, filter)
+	totalItems, _ := collection.CountDocuments(ctx, filter)
 
 	//Get total pages:
 	totalPages := (totalItems + int64(config.Limit) - 1) / int64(config.Limit)

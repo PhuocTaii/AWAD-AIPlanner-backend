@@ -1,9 +1,9 @@
 package services
 
 import (
-	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	config "project/Config"
@@ -13,55 +13,53 @@ import (
 	utils "project/Utils"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Register(ctx *gin.Context, user *models.User) (*models.User, *models.TimerSetting, *config.APIError) {
+// func Register(ctx *gin.Context, user *models.User) (*models.User, *models.TimerSetting, *config.APIError) {
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, nil, &config.APIError{
-			Code:    http.StatusInternalServerError,
-			Message: "Error hashing password",
-		}
-	}
+// 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+// 	if err != nil {
+// 		return nil, nil, &config.APIError{
+// 			Code:    http.StatusInternalServerError,
+// 			Message: "Error hashing password",
+// 		}
+// 	}
 
-	if config.UserCollection.FindOne(ctx, bson.M{"email": user.Email}).Err() == nil {
-		return nil, nil, &config.APIError{
-			Code:    http.StatusBadRequest,
-			Message: "Email already exists",
-		}
-	}
+// 	if config.UserCollection.FindOne(ctx, bson.M{"email": user.Email}).Err() == nil {
+// 		return nil, nil, &config.APIError{
+// 			Code:    http.StatusBadRequest,
+// 			Message: "Email already exists",
+// 		}
+// 	}
 
-	var tmp = &models.User{
-		Name:     user.Name,
-		Email:    user.Email,
-		Password: string(hash),
-	}
+// 	var tmp = &models.User{
+// 		Name:     user.Name,
+// 		Email:    user.Email,
+// 		Password: string(hash),
+// 	}
 
-	newUser, err := repository.InsertUser(ctx, tmp)
+// 	newUser, err := repository.InsertUser(ctx, tmp)
 
-	if err != nil {
-		return nil, nil, &config.APIError{
-			Code:    http.StatusInternalServerError,
-			Message: "Error inserting user",
-		}
-	}
+// 	if err != nil {
+// 		return nil, nil, &config.APIError{
+// 			Code:    http.StatusInternalServerError,
+// 			Message: "Error inserting user",
+// 		}
+// 	}
 
-	timerSetting, e := CreateTimerSetting(ctx, newUser)
-	if e != nil {
-		return nil, nil, e
-	}
+// 	timerSetting, e := CreateTimerSetting(ctx, newUser)
+// 	if e != nil {
+// 		return nil, nil, e
+// 	}
 
-	return newUser, timerSetting, nil
-}
+// 	return newUser, timerSetting, nil
+// }
 
 func Login(ctx *gin.Context, email, password string) (string, *models.User, *config.APIError) {
 	var user *models.User
 
-	fmt.Println(email, password)
-	user, err := repository.FindUserByEmail(ctx, email)
+	user, err := repository.FindUserByEmailAndVerification(ctx, email, true)
 	if err != nil {
 		return "", nil, &config.APIError{
 			Code:    http.StatusBadRequest,
@@ -99,7 +97,7 @@ func GoogleLogin(c *gin.Context) (string, *models.User, *models.TimerSetting, *c
 
 	code := c.Query("code")
 	googlecon := config.GoogleConfig()
-	token, err := googlecon.Exchange(context.Background(), code)
+	token, err := googlecon.Exchange(c, code)
 	if err != nil {
 		return "", nil, nil, &config.APIError{
 			Code:    http.StatusInternalServerError,
@@ -135,11 +133,12 @@ func GoogleLogin(c *gin.Context) (string, *models.User, *models.TimerSetting, *c
 	var stringToken string
 	var timerSetting *models.TimerSetting
 
-	newUser, err = repository.FindUserByEmail(c, user.Email) // Find user by email from google response
+	newUser, err = repository.FindUserByEmailAndVerification(c, user.Email, true) // Find user by email from google response
 
 	if err != nil {
-		tmp := &models.User{Name: user.Name, Email: user.Email, GoogleID: user.ID} // Create a new user
-		newUser, err = repository.InsertUser(c, tmp)                               // Insert the user
+		verficatonCode := generateVerifcationCode()
+		tmp := &models.User{Name: user.Name, Email: user.Email, GoogleID: user.ID, IsVerified: true, VerificationCode: verficatonCode} // Create a new user
+		newUser, err = repository.InsertUser(c, tmp)                                                                                   // Insert the user
 		if err != nil {
 			return "", nil, nil, &config.APIError{
 				Code:    http.StatusInternalServerError,
@@ -172,4 +171,71 @@ func GoogleLogin(c *gin.Context) (string, *models.User, *models.TimerSetting, *c
 	}
 
 	return stringToken, newUser, timerSetting, nil
+}
+
+func generateVerifcationCode() string {
+	bytes := make([]byte, 16)
+	rand.Read(bytes)
+	return hex.EncodeToString(bytes)
+}
+
+func Register(ctx *gin.Context, user *models.User) *config.APIError {
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Error hashing password",
+		}
+	}
+
+	if _, err := repository.FindUserByEmail(ctx, user.Email); err == nil {
+		return &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Email already exists",
+		}
+	}
+
+	verificationCode := generateVerifcationCode()
+
+	var tmp = &models.User{
+		Name:             user.Name,
+		Email:            user.Email,
+		Password:         string(hash),
+		IsVerified:       false,
+		VerificationCode: verificationCode,
+	}
+
+	newUser, err := repository.InsertUser(ctx, tmp)
+
+	if err != nil {
+		return &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Error inserting user",
+		}
+	}
+
+	if err := utils.SendVerificationEmail(newUser.Email, verificationCode); err != nil {
+		return &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to send verification email",
+		}
+	}
+
+	return nil
+}
+
+func Verify(c *gin.Context, code string) *config.APIError {
+	user, err := repository.VerifyUser(c, code)
+	if err != nil {
+		return &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Error verifying user",
+		}
+	}
+	_, e := CreateTimerSetting(c, user)
+	if e != nil {
+		return e
+	}
+	return nil
 }

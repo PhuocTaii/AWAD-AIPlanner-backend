@@ -14,7 +14,10 @@ import (
 func CreateFocusLog(c *gin.Context, request requestlog.CreateRequestLogRequest) (*models.FocusLog, *config.APIError) {
 	curUser, err := utils.GetCurrentUser(c)
 	if err != nil {
-		return nil, err
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
 	}
 
 	focusLog := &models.FocusLog{

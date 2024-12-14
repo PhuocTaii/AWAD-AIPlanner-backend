@@ -99,3 +99,18 @@ func DeleteTask(ctx *gin.Context, task *models.Task) (*models.Task, error) {
 	}
 	return task, nil
 }
+
+func GetTasks(ctx *gin.Context, filter bson.M) ([]*models.Task, error) {
+	cursor, err := config.TaskCollection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var tasks []*models.Task
+	if err = cursor.All(ctx, &tasks); err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
+}
