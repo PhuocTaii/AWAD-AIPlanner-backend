@@ -1,6 +1,10 @@
 package models
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type User struct {
 	ID               primitive.ObjectID `bson:"_id,omitempty" json:"id"`
@@ -11,6 +15,6 @@ type User struct {
 	Avatar           string             `bson:"avatar" json:"avatar"`
 	IsVerified       bool               `bson:"is_verified" json:"is_verified"`
 	VerificationCode string             `bson:"verification_code" json:"verification_code"`
-	CreatedAt        primitive.DateTime `bson:"created_at" json:"created_at"`
-	UpdatedAt        primitive.DateTime `bson:"updated_at" json:"updated_at"`
+	CreatedAt        *time.Time         `bson:"created_at" json:"created_at"`
+	UpdatedAt        *time.Time         `bson:"updated_at" json:"updated_at"`
 }

@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"net/http"
 	config "project/Config"
 	models "project/Models"
@@ -24,11 +23,12 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 			Message: "Unauthorized",
 		}
 	}
-
-	if request.EstimatedStartTime > request.EstimatedEndTime {
-		return nil, &config.APIError{
-			Code:    http.StatusBadRequest,
-			Message: "Invalid estimated start time and estimated end time",
+	if (request.EstimatedEndTime != nil) && (request.EstimatedStartTime != nil) {
+		if request.EstimatedEndTime.Unix() > request.EstimatedStartTime.Unix() {
+			return nil, &config.APIError{
+				Code:    http.StatusBadRequest,
+				Message: "Invalid estimated start time and estimated end time",
+			}
 		}
 	}
 
@@ -44,14 +44,6 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 			Message: "Invalid priority",
 		}
 	}
-
-	if request.EstimatedStartTime > request.EstimatedEndTime {
-		return nil, &config.APIError{
-			Code:    http.StatusBadRequest,
-			Message: "Invalid estimated start time and estimated end time",
-		}
-	}
-
 	// Create task
 	task := &models.Task{
 		Name:               request.Name,
@@ -136,14 +128,14 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 	if request.Status == "" {
 		request.Status = constant.StatusToString(task.Status)
 	}
-	if request.EstimatedStartTime == 0 {
+	if request.EstimatedStartTime == nil {
 		request.EstimatedStartTime = task.EstimatedStartTime
 	}
-	if request.EstimatedEndTime == 0 {
+	if request.EstimatedEndTime == nil {
 		request.EstimatedEndTime = task.EstimatedEndTime
 	}
 
-	if request.EstimatedStartTime > request.EstimatedEndTime {
+	if request.EstimatedStartTime.After(*request.EstimatedEndTime) {
 		return nil, &config.APIError{
 			Code:    http.StatusBadRequest,
 			Message: "Invalid estimated start time and estimated end time",
@@ -180,9 +172,6 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 
 	//cannot modify status of expired task
 	if task.Status == constant.Expired {
-		fmt.Println("hello, this is thanh vân")
-		//check valid new estimated start and end time
-
 		if task.ActualStartTime == nil || task.ActualStartTime.After(*utils.GetCurrent()) {
 			task.Status = constant.ToDo
 		} else {

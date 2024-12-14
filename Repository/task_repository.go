@@ -30,8 +30,8 @@ func InsertTask(ctx *gin.Context, task *models.Task) (*models.Task, error) {
 		EstimatedStartTime: task.EstimatedStartTime,
 		EstimatedEndTime:   task.EstimatedEndTime,
 		IsDeleted:          false,
-		CreatedAt:          primitive.DateTime(utils.GetCurrentTime()),
-		UpdatedAt:          primitive.DateTime(utils.GetCurrentTime()),
+		CreatedAt:          utils.GetCurrent(),
+		UpdatedAt:          utils.GetCurrent(),
 	}
 
 	res, err := config.TaskCollection.InsertOne(ctx, newTask)

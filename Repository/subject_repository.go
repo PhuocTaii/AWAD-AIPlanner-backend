@@ -36,8 +36,8 @@ func InsertSubject(ctx *gin.Context, subject *models.Subject) (*models.Subject, 
 		Name:      subject.Name,
 		User:      subject.User,
 		IsDeleted: false,
-		CreatedAt: primitive.DateTime(utils.GetCurrentTime()),
-		UpdatedAt: primitive.DateTime(utils.GetCurrentTime()),
+		CreatedAt: utils.GetCurrent(),
+		UpdatedAt: utils.GetCurrent(),
 	}
 
 	res, err := config.SubjectCollection.InsertOne(ctx, newSubject)

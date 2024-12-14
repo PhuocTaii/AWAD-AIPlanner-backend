@@ -13,9 +13,9 @@ func InsertFocusLog(ctx *gin.Context, focusLog *models.FocusLog) (*models.FocusL
 	newFocusLog := &models.FocusLog{
 		User:      focusLog.User,
 		FocusTime: focusLog.FocusTime,
-		Date:      primitive.DateTime(utils.GetCurrentTime()),
-		CreatedAt: primitive.DateTime(utils.GetCurrentTime()),
-		UpdatedAt: primitive.DateTime(utils.GetCurrentTime()),
+		Date:      utils.GetCurrent(),
+		CreatedAt: utils.GetCurrent(),
+		UpdatedAt: utils.GetCurrent(),
 	}
 
 	res, err := config.FocusLogCollection.InsertOne(ctx, newFocusLog)
