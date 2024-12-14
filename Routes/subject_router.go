@@ -11,5 +11,6 @@ func SetupSubjectRouter(apiGroup *gin.RouterGroup) {
 	subject := apiGroup.Group("/subject")
 	{
 		subject.POST("/", middleware.RequireAuth, controllers.CreateSubject)
+		subject.GET("/", middleware.RequireAuth, controllers.GetSubjects)
 	}
 }
