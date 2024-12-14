@@ -114,18 +114,6 @@ func Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Please verify your gmail!",
 	})
-
-	// if err != nil {
-	// 	defer config.HandleError(c, err)
-	// 	return
-	// }
-
-	// RegisterResponse := &authResponse.RegisterResponse{
-	// 	User:         newUser,
-	// 	TimerSetting: timerSetting,
-	// }
-
-	// c.JSON(http.StatusCreated, RegisterResponse)
 }
 
 func Verify(c *gin.Context) {
