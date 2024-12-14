@@ -189,7 +189,7 @@ func Register(ctx *gin.Context, user *models.User) *config.APIError {
 		}
 	}
 
-	if _, err := repository.FindUserByEmailAndVerification(ctx, user.Email, true); err == nil {
+	if _, err := repository.FindUserByEmail(ctx, user.Email); err == nil {
 		return &config.APIError{
 			Code:    http.StatusBadRequest,
 			Message: "Email already exists",

@@ -15,7 +15,10 @@ func CreateSubject(c *gin.Context, request subject.CreateSubjectRequest) (*model
 	//Get current user
 	curUser, err := utils.GetCurrentUser(c)
 	if err != nil {
-		return nil, err
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
 	}
 	// Create task
 	subject := &models.Subject{

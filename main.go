@@ -21,6 +21,7 @@ func SetupRouter() *gin.Engine {
 		routes.SetupSubjectRouter(api)
 		routes.SetupTimeSettingRouter(api)
 		routes.SetupAiRouter(api)
+		routes.SetupFocusLogRouter(api)
 	}
 
 	return r

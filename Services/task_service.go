@@ -7,6 +7,7 @@ import (
 	models "project/Models"
 	constant "project/Models/Constant"
 	task "project/Models/Request/Task"
+	responseTask "project/Models/Response/Task"
 	repository "project/Repository"
 	utils "project/Utils"
 
@@ -18,7 +19,17 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*models.Task, *
 	//Get current user
 	curUser, err := utils.GetCurrentUser(c)
 	if err != nil {
-		return nil, err
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+	}
+
+	if request.EstimatedStartTime > request.EstimatedEndTime {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid estimated start time and estimated end time",
+		}
 	}
 
 	subject, err := FindSubjectById(c, request.SubjectId)
@@ -191,10 +202,21 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*mod
 	return res, nil
 }
 
-func GetPagingTask(c *gin.Context, limit, page int, filter, sort bson.M) ([]*models.Task, int, int, *config.APIError) {
+func GetPagingTask(c *gin.Context, limit, page int, filter, sort bson.M) ([]*responseTask.GetTaskResponse, int, int, *config.APIError) {
+	curUser, _ := utils.GetCurrentUser(c)
+	if curUser == nil {
+		return nil, 0, 0, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+	}
+
+	filter["user._id"] = utils.ConvertStringToObjectID(curUser.ID.Hex())
+
 	paginateConfig := config.NewPagingConfig(c, limit, page)
 
 	tasks, totalPages, totalItems, err := config.PaginatedFind[*models.Task](c, config.TaskCollection, paginateConfig, filter, sort)
+
 	if err != nil {
 		return nil, 0, 0, &config.APIError{
 			Code:    http.StatusInternalServerError,
@@ -202,8 +224,29 @@ func GetPagingTask(c *gin.Context, limit, page int, filter, sort bson.M) ([]*mod
 		}
 	}
 
-	return tasks, totalPages, totalItems, nil
+	response := make([]*responseTask.GetTaskResponse, len(tasks))
 
+	for index, task := range tasks {
+		response[index] = &responseTask.GetTaskResponse{
+			ID:                 task.ID,
+			Name:               task.Name,
+			Description:        task.Description,
+			Subject:            task.Subject,
+			User:               task.User,
+			Priority:           constant.PriorityToString(task.Priority),
+			Status:             constant.StatusToString(task.Status),
+			EstimatedStartTime: task.EstimatedStartTime,
+			EstimatedEndTime:   task.EstimatedEndTime,
+			ActualStartTime:    task.ActualStartTime,
+			ActualEndTime:      task.ActualEndTime,
+			FocusTime:          task.FocusTime,
+			IsDeleted:          task.IsDeleted,
+			CreatedAt:          task.CreatedAt,
+			UpdatedAt:          task.UpdatedAt,
+		}
+	}
+
+	return response, totalPages, totalItems, nil
 }
 
 func DeleteTask(c *gin.Context, id string) (*models.Task, *config.APIError) {
