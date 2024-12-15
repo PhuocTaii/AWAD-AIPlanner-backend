@@ -51,6 +51,25 @@ func UpdateTask(c *gin.Context) {
 	c.JSON(http.StatusOK, task)
 }
 
+func UpdateTaskStatus(c *gin.Context) {
+	var request task.ModifyTaskStatusRequest
+	var taskId = c.Param("id")
+	if err := c.ShouldBindJSON(&request); err != nil {
+		error := &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid task data",
+		}
+		config.HandleError(c, error)
+		return
+	}
+	task, err := services.ModifyTaskStatus(c, taskId, request)
+	if err != nil {
+		defer config.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, task)
+}
+
 func GetTasks(c *gin.Context) {
 
 	limit, _ := strconv.Atoi(c.Query("limit"))

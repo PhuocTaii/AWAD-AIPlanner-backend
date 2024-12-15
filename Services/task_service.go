@@ -48,8 +48,8 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 	task := &models.Task{
 		Name:               request.Name,
 		Description:        request.Description,
-		User:               *curUser,
-		Subject:            *subject,
+		User:               curUser,
+		Subject:            subject,
 		Priority:           priority,
 		Status:             constant.ToDo,
 		EstimatedStartTime: request.EstimatedStartTime,
@@ -112,39 +112,34 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 		}
 	}
 
-	// Modify task
-	if request.Name == "" {
-		request.Name = task.Name
-	}
-	if request.Description == "" {
-		request.Description = task.Description
-	}
-	if request.SubjectId == "" {
-		request.SubjectId = task.Subject.ID.Hex()
-	}
-	if request.Priority == "" {
-		request.Priority = constant.PriorityToString(task.Priority)
-	}
-	if request.Status == "" {
-		request.Status = constant.StatusToString(task.Status)
-	}
-	if request.EstimatedStartTime == nil {
-		request.EstimatedStartTime = task.EstimatedStartTime
-	}
-	if request.EstimatedEndTime == nil {
-		request.EstimatedEndTime = task.EstimatedEndTime
-	}
-
-	if request.EstimatedStartTime.After(*request.EstimatedEndTime) {
+	if (request.Name == "") && (request.Description == "") && (request.SubjectId == "") && (request.Priority == "") && (request.Status == "") && (request.EstimatedStartTime == nil) && (request.EstimatedEndTime == nil) {
 		return nil, &config.APIError{
 			Code:    http.StatusBadRequest,
-			Message: "Invalid estimated start time and estimated end time",
+			Message: "Invalid task data",
 		}
 	}
 
-	subject, err := FindSubjectById(c, request.SubjectId)
-	if err != nil {
-		return nil, err
+	if request.EstimatedEndTime != nil && request.EstimatedStartTime != nil {
+		if request.EstimatedStartTime.Unix() > request.EstimatedEndTime.Unix() {
+			return nil, &config.APIError{
+				Code:    http.StatusBadRequest,
+				Message: "Invalid estimated start time and estimated end time",
+			}
+		}
+	}
+
+	var subject *models.Subject
+
+	if request.SubjectId != "" {
+		subject, _ = FindSubjectById(c, request.SubjectId)
+		if subject == nil {
+			return nil, &config.APIError{
+				Code:    http.StatusBadRequest,
+				Message: "Subject not found",
+			}
+		}
+	} else {
+		subject = nil
 	}
 
 	priority, _ := constant.StringToPriority(request.Priority)
@@ -166,7 +161,7 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 	task.Name = request.Name
 	task.Description = request.Description
 	task.Priority = priority
-	task.Subject = *subject
+	task.Subject = subject
 	task.EstimatedStartTime = request.EstimatedStartTime
 	task.EstimatedEndTime = request.EstimatedEndTime
 
@@ -207,6 +202,101 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 	}
 
 	// Update task
+	res, _ := repository.UpdateTask(c, task)
+	if res == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Failed to update task",
+		}
+	}
+
+	response := &responseTask.GetTaskResponse{
+		ID:                 res.ID,
+		Name:               res.Name,
+		Description:        res.Description,
+		Subject:            res.Subject,
+		User:               res.User,
+		Priority:           constant.PriorityToString(res.Priority),
+		Status:             constant.StatusToString(res.Status),
+		EstimatedStartTime: res.EstimatedStartTime,
+		EstimatedEndTime:   res.EstimatedEndTime,
+		ActualStartTime:    res.ActualStartTime,
+		ActualEndTime:      res.ActualEndTime,
+		FocusTime:          res.FocusTime,
+		IsDeleted:          res.IsDeleted,
+		CreatedAt:          res.CreatedAt,
+		UpdatedAt:          res.UpdatedAt,
+	}
+
+	return response, nil
+}
+
+func ModifyTaskStatus(c *gin.Context, id string, request task.ModifyTaskStatusRequest) (*responseTask.GetTaskResponse, *config.APIError) {
+	//Get current user
+	curUser, _ := utils.GetCurrentUser(c)
+	if curUser == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+	}
+
+	task, _ := repository.FindTaskByIdAndUserId(c, id, curUser.ID.Hex())
+	if task == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusNotFound,
+			Message: "Task not found",
+		}
+	}
+
+	//cannot modify task to expired
+	if request.Status == "Expired" && task.Status != constant.Expired {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Cannot modify task to expired",
+		}
+	}
+
+	status, _ := constant.StringToStatus(request.Status)
+	if status == -1 {
+		return nil, &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Invalid status",
+		}
+	}
+
+	// modify status
+	if task.Status == constant.Expired {
+		if task.ActualStartTime == nil || task.ActualStartTime.After(*utils.GetCurrent()) {
+			task.Status = constant.ToDo
+		} else {
+			task.Status = constant.InProgress
+		}
+	} else {
+		//if change status to completed, set actual end time
+		if status == constant.Completed {
+			task.ActualEndTime = utils.GetCurrent()
+			//if change status from to do to completed, set actual start time to current time
+			if task.Status == constant.ToDo {
+				task.ActualStartTime = utils.GetCurrent()
+			}
+		}
+		//if change status to to do, set actual start time and end time to nil
+		if status == constant.ToDo {
+			task.ActualStartTime = nil
+			task.ActualEndTime = nil
+		}
+		//if change status to in progress, set actual start time to current time
+		if status == constant.InProgress {
+			task.ActualStartTime = utils.GetCurrent()
+			if task.Status == constant.Completed {
+				task.ActualEndTime = nil
+			}
+		}
+
+		task.Status = status
+	}
+
 	res, _ := repository.UpdateTask(c, task)
 	if res == nil {
 		return nil, &config.APIError{
