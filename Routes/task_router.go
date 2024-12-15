@@ -14,5 +14,6 @@ func SetupTaskRouter(apiGroup *gin.RouterGroup) {
 		task.PUT("/:id", middleware.RequireAuth, controllers.UpdateTask)
 		task.GET("/", middleware.RequireAuth, controllers.GetTasks)
 		task.PUT("/delete/:id", middleware.RequireAuth, controllers.DeleteTask)
+		task.PUT("/status/:id", middleware.RequireAuth, controllers.UpdateTaskStatus)
 	}
 }
