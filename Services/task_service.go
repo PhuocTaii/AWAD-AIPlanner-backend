@@ -343,7 +343,7 @@ func GetPagingTask(c *gin.Context, limit, page int, filter, sort bson.M) ([]*res
 		}
 	}
 
-	filter["user._id"] = utils.ConvertStringToObjectID(curUser.ID.Hex())
+	filter["user"] = utils.ConvertStringToObjectID(curUser.ID.Hex())
 
 	paginateConfig := config.NewPagingConfig(c, limit, page)
 
