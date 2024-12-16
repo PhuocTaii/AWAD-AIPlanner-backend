@@ -38,8 +38,16 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 	priority, _ := constant.StringToPriority(request.Priority)
 	if priority == -1 {
 		return nil, &config.APIError{
-			Code:    http.StatusInternalServerError,
+			Code:    http.StatusBadRequest,
 			Message: "Invalid priority",
+		}
+	}
+
+	status, _ := constant.StringToStatus(request.Status)
+	if status == -1 {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid status",
 		}
 	}
 	// Create task
@@ -48,7 +56,7 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 		Description:        request.Description,
 		User:               curUser.ID,
 		Priority:           priority,
-		Status:             constant.ToDo,
+		Status:             status,
 		EstimatedStartTime: request.EstimatedStartTime,
 		EstimatedEndTime:   request.EstimatedEndTime,
 	}
@@ -412,4 +420,15 @@ func DeleteTask(c *gin.Context, id string) (*models.Task, *config.APIError) {
 		}
 	}
 	return res, nil
+}
+
+func ModifyDeletedSubjectTasks(c *gin.Context, subjectId string) *config.APIError {
+	err := repository.ModifyDeletedSubjectTasks(c, subjectId)
+	if err != nil {
+		return &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to modify tasks",
+		}
+	}
+	return nil
 }
