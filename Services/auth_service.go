@@ -24,7 +24,7 @@ func Login(ctx *gin.Context, email, password string) (string, *user.UserResponse
 	if err != nil {
 		return "", nil, &config.APIError{
 			Code:    http.StatusBadRequest,
-			Message: "Invalid email or password",
+			Message: "Please verify your email!",
 		}
 	}
 

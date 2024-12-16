@@ -86,7 +86,7 @@ func Register(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "Please verify your gmail!",
+		"message": "Please verify your email!",
 	})
 }
 
