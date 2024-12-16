@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	config "project/Config"
@@ -40,14 +41,15 @@ func ChangeUserPassword(c *gin.Context) {
 func ModifyAvatar(c *gin.Context) {
 	file, _ := c.Get("file")
 	filePath, _ := c.Get("filePath")
-	imageUrl, err := services.ModifyAvatar(c, file.(multipart.File), filePath.(string))
+	fmt.Println("file")
+	res, err := services.ModifyAvatar(c, file.(multipart.File), filePath.(string))
 	if err != nil {
 		defer config.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"imageUrl": imageUrl,
-	})
+	fmt.Println("file1")
+
+	c.JSON(http.StatusOK, res)
 }
 
 func UpdateUserProfile(c *gin.Context) {

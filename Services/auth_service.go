@@ -9,6 +9,7 @@ import (
 	config "project/Config"
 	models "project/Models"
 	auth "project/Models/Response/Auth"
+	user "project/Models/Response/User"
 	repository "project/Repository"
 	utils "project/Utils"
 
@@ -16,50 +17,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// func Register(ctx *gin.Context, user *models.User) (*models.User, *models.TimerSetting, *config.APIError) {
+func Login(ctx *gin.Context, email, password string) (string, *user.UserResponse, *config.APIError) {
+	var logUser *models.User
 
-// 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-// 	if err != nil {
-// 		return nil, nil, &config.APIError{
-// 			Code:    http.StatusInternalServerError,
-// 			Message: "Error hashing password",
-// 		}
-// 	}
-
-// 	if config.UserCollection.FindOne(ctx, bson.M{"email": user.Email}).Err() == nil {
-// 		return nil, nil, &config.APIError{
-// 			Code:    http.StatusBadRequest,
-// 			Message: "Email already exists",
-// 		}
-// 	}
-
-// 	var tmp = &models.User{
-// 		Name:     user.Name,
-// 		Email:    user.Email,
-// 		Password: string(hash),
-// 	}
-
-// 	newUser, err := repository.InsertUser(ctx, tmp)
-
-// 	if err != nil {
-// 		return nil, nil, &config.APIError{
-// 			Code:    http.StatusInternalServerError,
-// 			Message: "Error inserting user",
-// 		}
-// 	}
-
-// 	timerSetting, e := CreateTimerSetting(ctx, newUser)
-// 	if e != nil {
-// 		return nil, nil, e
-// 	}
-
-// 	return newUser, timerSetting, nil
-// }
-
-func Login(ctx *gin.Context, email, password string) (string, *models.User, *config.APIError) {
-	var user *models.User
-
-	user, err := repository.FindUserByEmailAndVerification(ctx, email, true)
+	logUser, err := repository.FindUserByEmailAndVerification(ctx, email, true)
 	if err != nil {
 		return "", nil, &config.APIError{
 			Code:    http.StatusBadRequest,
@@ -67,7 +28,7 @@ func Login(ctx *gin.Context, email, password string) (string, *models.User, *con
 		}
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(logUser.Password), []byte(password))
 	if err != nil {
 		return "", nil, &config.APIError{
 			Code:    http.StatusBadRequest,
@@ -75,7 +36,7 @@ func Login(ctx *gin.Context, email, password string) (string, *models.User, *con
 		}
 	}
 
-	stringToken, error := utils.GenerateJWT(ctx, user)
+	stringToken, error := utils.GenerateJWT(ctx, logUser)
 	if error != nil {
 		return "", nil, &config.APIError{
 			Code:    http.StatusInternalServerError,
@@ -83,10 +44,17 @@ func Login(ctx *gin.Context, email, password string) (string, *models.User, *con
 		}
 	}
 
-	return stringToken, user, nil
+	res := &user.UserResponse{
+		Name:     logUser.Name,
+		Email:    logUser.Email,
+		GoogleId: logUser.GoogleID,
+		Avatar:   logUser.Avatar,
+	}
+
+	return stringToken, res, nil
 }
 
-func GoogleLogin(c *gin.Context) (string, *models.User, *models.TimerSetting, *config.APIError) {
+func GoogleLogin(c *gin.Context) (string, *user.UserResponse, *models.TimerSetting, *config.APIError) {
 	state := c.Query("state")
 	if state != "randomstate" {
 		return "", nil, nil, &config.APIError{
@@ -120,9 +88,9 @@ func GoogleLogin(c *gin.Context) (string, *models.User, *models.TimerSetting, *c
 		}
 	}
 	//Unmarshal the data into a struct
-	var user auth.GoogleUser
+	var logUser auth.GoogleUser
 
-	err = json.Unmarshal(userData, &user)
+	err = json.Unmarshal(userData, &logUser)
 	if err != nil {
 		return "", nil, nil, &config.APIError{
 			Code:    http.StatusInternalServerError,
@@ -133,12 +101,12 @@ func GoogleLogin(c *gin.Context) (string, *models.User, *models.TimerSetting, *c
 	var stringToken string
 	var timerSetting *models.TimerSetting
 
-	newUser, err = repository.FindUserByEmailAndVerification(c, user.Email, true) // Find user by email from google response
+	newUser, err = repository.FindUserByEmailAndVerification(c, logUser.Email, true) // Find user by email from google response
 
 	if err != nil {
 		verficatonCode := generateVerifcationCode()
-		tmp := &models.User{Name: user.Name, Email: user.Email, GoogleID: user.ID, IsVerified: true, VerificationCode: verficatonCode} // Create a new user
-		newUser, err = repository.InsertUser(c, tmp)                                                                                   // Insert the user
+		tmp := &models.User{Name: logUser.Name, Email: logUser.Email, GoogleID: logUser.ID, IsVerified: true, VerificationCode: verficatonCode} // Create a new user
+		newUser, err = repository.InsertUser(c, tmp)                                                                                            // Insert the user
 		if err != nil {
 			return "", nil, nil, &config.APIError{
 				Code:    http.StatusInternalServerError,
@@ -170,7 +138,14 @@ func GoogleLogin(c *gin.Context) (string, *models.User, *models.TimerSetting, *c
 		}
 	}
 
-	return stringToken, newUser, timerSetting, nil
+	res := &user.UserResponse{
+		Name:     newUser.Name,
+		Email:    newUser.Email,
+		GoogleId: newUser.GoogleID,
+		Avatar:   newUser.Avatar,
+	}
+
+	return stringToken, res, timerSetting, nil
 }
 
 func generateVerifcationCode() string {

@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	config "project/Config"
@@ -35,16 +36,24 @@ func Feedback(c *gin.Context) (*genai.GenerateContentResponse, *config.APIError)
 		var taskAI []*ai.AiTask
 		for _, task := range tasks {
 			tmp := &ai.AiTask{
-				Name:               task.Name,
-				Description:        task.Description,
-				Subject:            task.Subject.Name,
-				User:               task.User.Name,
-				Priority:           constant.PriorityToString(task.Priority),
-				Status:             constant.StatusToString(task.Status),
-				FocusTime:          task.FocusTime,
-				EstimatedStartTime: task.EstimatedStartTime,
-				EstimatedEndTime:   task.EstimatedEndTime,
+				Name:        task.Name,
+				Description: task.Description,
+				Subject:     task.Subject.Name,
+				Priority:    constant.PriorityToString(task.Priority),
+				Status:      constant.StatusToString(task.Status),
+				FocusTime:   task.FocusTime,
 			}
+			if task.EstimatedStartTime == nil {
+				tmp.EstimatedStartTime = ""
+			} else {
+				tmp.EstimatedStartTime = task.EstimatedStartTime.Format("02-01-2006 15:04:05")
+			}
+			if task.EstimatedEndTime == nil {
+				tmp.EstimatedEndTime = ""
+			} else {
+				tmp.EstimatedEndTime = task.EstimatedEndTime.Format("02-01-2006 15:04:05")
+			}
+			fmt.Println(tmp)
 			taskAI = append(taskAI, tmp)
 		}
 		taskResponses = append(taskResponses, taskAI)

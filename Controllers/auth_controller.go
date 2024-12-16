@@ -13,32 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// func Register(c *gin.Context) {
-// var request auth.RegisterRequest
-// if err := c.ShouldBindJSON(&request); err != nil {
-// 	error := &config.APIError{
-// 		Code:    http.StatusBadRequest,
-// 		Message: "Invalid user data",
-// 	}
-// 	config.HandleError(c, error)
-// 	return
-// }
-// user := models.User{Name: request.Name, Email: request.Email, Password: request.Password}
-// newUser, timerSetting, err := services.Register(c, &user)
-
-// if err != nil {
-// 	defer config.HandleError(c, err)
-// 	return
-// }
-
-// RegisterResponse := &authResponse.RegisterResponse{
-// 	User:         newUser,
-// 	TimerSetting: timerSetting,
-// }
-
-// c.JSON(http.StatusCreated, RegisterResponse)
-// }
-
 func Login(c *gin.Context) {
 	var request auth.LoginRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
