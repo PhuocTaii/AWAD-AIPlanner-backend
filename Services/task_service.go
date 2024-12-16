@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.GetTaskResponse, *config.APIError) {
@@ -33,12 +34,6 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 	}
 
 	subject, _ := FindSubjectByIdAndUserId(c, request.SubjectId, curUser.ID.Hex())
-	if subject == nil {
-		return nil, &config.APIError{
-			Code:    http.StatusNotFound,
-			Message: "Subject not found",
-		}
-	}
 
 	priority, _ := constant.StringToPriority(request.Priority)
 	if priority == -1 {
@@ -52,11 +47,16 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 		Name:               request.Name,
 		Description:        request.Description,
 		User:               curUser.ID,
-		Subject:            subject.ID,
 		Priority:           priority,
 		Status:             constant.ToDo,
 		EstimatedStartTime: request.EstimatedStartTime,
 		EstimatedEndTime:   request.EstimatedEndTime,
+	}
+
+	if subject != nil {
+		task.Subject = subject.ID
+	} else {
+		task.Subject = primitive.ObjectID{}
 	}
 
 	// Insert task
@@ -75,8 +75,8 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 		ID:                 res.ID,
 		Name:               res.Name,
 		Description:        res.Description,
-		Subject:            resSubject.Name,
-		User:               resUser.Email,
+		Subject:            resSubject,
+		User:               resUser,
 		Priority:           constant.PriorityToString(res.Priority),
 		Status:             constant.StatusToString(res.Status),
 		EstimatedStartTime: res.EstimatedStartTime,
@@ -134,13 +134,9 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 		}
 	}
 
-	var subject *models.Subject
+	// var subject *models.Subject
 
-	if request.SubjectId != "" {
-		subject, _ = FindSubjectByIdAndUserId(c, request.SubjectId, curUser.ID.Hex())
-	} else {
-		subject = nil
-	}
+	subject, _ := FindSubjectByIdAndUserId(c, request.SubjectId, curUser.ID.Hex())
 
 	priority, _ := constant.StringToPriority(request.Priority)
 	if priority == -1 {
@@ -161,7 +157,7 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 	task.Name = request.Name
 	task.Description = request.Description
 	task.Priority = priority
-	task.Subject = subject.ID
+	// task.Subject = subject.ID
 	task.EstimatedStartTime = request.EstimatedStartTime
 	task.EstimatedEndTime = request.EstimatedEndTime
 
@@ -201,6 +197,12 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 		task.Status = constant.Expired
 	}
 
+	if subject != nil {
+		task.Subject = subject.ID
+	} else {
+		task.Subject = primitive.ObjectID{}
+	}
+
 	// Update task
 	res, _ := repository.UpdateTask(c, task)
 	if res == nil {
@@ -217,8 +219,8 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 		ID:                 res.ID,
 		Name:               res.Name,
 		Description:        res.Description,
-		Subject:            resSubject.Name,
-		User:               resUser.Email,
+		Subject:            resSubject,
+		User:               resUser,
 		Priority:           constant.PriorityToString(res.Priority),
 		Status:             constant.StatusToString(res.Status),
 		EstimatedStartTime: res.EstimatedStartTime,
@@ -315,8 +317,8 @@ func ModifyTaskStatus(c *gin.Context, id string, request task.ModifyTaskStatusRe
 		ID:                 res.ID,
 		Name:               res.Name,
 		Description:        res.Description,
-		Subject:            resSubject.Name,
-		User:               resUser.Email,
+		Subject:            resSubject,
+		User:               resUser,
 		Priority:           constant.PriorityToString(res.Priority),
 		Status:             constant.StatusToString(res.Status),
 		EstimatedStartTime: res.EstimatedStartTime,
@@ -363,8 +365,8 @@ func GetPagingTask(c *gin.Context, limit, page int, filter, sort bson.M) ([]*res
 			ID:                 task.ID,
 			Name:               task.Name,
 			Description:        task.Description,
-			Subject:            resSubject.Name,
-			User:               resUser.Email,
+			Subject:            resSubject,
+			User:               resUser,
 			Priority:           constant.PriorityToString(task.Priority),
 			Status:             constant.StatusToString(task.Status),
 			EstimatedStartTime: task.EstimatedStartTime,
