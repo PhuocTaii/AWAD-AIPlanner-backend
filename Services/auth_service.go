@@ -190,12 +190,10 @@ func Register(ctx *gin.Context, user *models.User) *config.APIError {
 		}
 	}
 
-	if err := utils.SendVerificationEmail(newUser.Email, verificationCode); err != nil {
-		return &config.APIError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to send verification email",
+	go func() {
+		if err := utils.SendVerificationEmail(newUser.Email, verificationCode); err != nil {
 		}
-	}
+	}()
 
 	return nil
 }
