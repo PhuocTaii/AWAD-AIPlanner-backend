@@ -24,7 +24,7 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 		}
 	}
 	if (request.EstimatedEndTime != nil) && (request.EstimatedStartTime != nil) {
-		if request.EstimatedEndTime.Unix() > request.EstimatedStartTime.Unix() {
+		if request.EstimatedStartTime.Unix() > request.EstimatedEndTime.Unix() {
 			return nil, &config.APIError{
 				Code:    http.StatusBadRequest,
 				Message: "Invalid estimated start time and estimated end time",
@@ -32,9 +32,12 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 		}
 	}
 
-	subject, err := FindSubjectById(c, request.SubjectId)
-	if err != nil {
-		return nil, err
+	subject, _ := FindSubjectByIdAndUserId(c, request.SubjectId, curUser.ID.Hex())
+	if subject == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusNotFound,
+			Message: "Subject not found",
+		}
 	}
 
 	priority, _ := constant.StringToPriority(request.Priority)
@@ -131,13 +134,7 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 	var subject *models.Subject
 
 	if request.SubjectId != "" {
-		subject, _ = FindSubjectById(c, request.SubjectId)
-		if subject == nil {
-			return nil, &config.APIError{
-				Code:    http.StatusBadRequest,
-				Message: "Subject not found",
-			}
-		}
+		subject, _ = FindSubjectByIdAndUserId(c, request.SubjectId, curUser.ID.Hex())
 	} else {
 		subject = nil
 	}
