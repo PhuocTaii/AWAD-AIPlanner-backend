@@ -87,7 +87,7 @@ func GetTasks(c *gin.Context) {
 		filter["name"] = name
 	}
 	if !subject.IsZero() {
-		filter["subject._id"] = subject
+		filter["subject"] = subject
 	}
 	if priority != -1 {
 		filter["priority"] = priority
