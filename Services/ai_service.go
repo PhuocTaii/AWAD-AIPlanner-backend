@@ -35,10 +35,11 @@ func Feedback(c *gin.Context) (*genai.GenerateContentResponse, *config.APIError)
 		tasks, _ := repository.GetTasks(c, filter)
 		var taskAI []*ai.AiTask
 		for _, task := range tasks {
+			tmpSubject, _ := repository.FindSubjectById(c, task.Subject.Hex())
 			tmp := &ai.AiTask{
 				Name:        task.Name,
 				Description: task.Description,
-				Subject:     task.Subject.Name,
+				Subject:     tmpSubject.Name,
 				Priority:    constant.PriorityToString(task.Priority),
 				Status:      constant.StatusToString(task.Status),
 				FocusTime:   task.FocusTime,

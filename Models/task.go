@@ -11,8 +11,8 @@ type Task struct {
 	Name        string             `bson:"name" json:"name"`
 	Description string             `bson:"description" json:"description"`
 	//Reference to subject
-	Subject *Subject `bson:"subject" json:"subject"`
-	User    *User    `bson:"user" json:"user"`
+	Subject primitive.ObjectID `bson:"subject" json:"subject"`
+	User    primitive.ObjectID `bson:"user" json:"user"`
 	//Priority and Status of the task using enum
 	Priority           int        `bson:"priority" json:"priority"`
 	Status             int        `bson:"status" json:"status"`

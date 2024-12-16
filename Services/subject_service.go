@@ -41,7 +41,7 @@ func CreateSubject(c *gin.Context, request subject.CreateSubjectRequest) (*model
 	// Create task
 	subject := &models.Subject{
 		Name: request.Name,
-		User: *curUser,
+		User: curUser.ID,
 	}
 
 	// Insert task
@@ -80,4 +80,36 @@ func FindSubjectByIdAndUserId(c *gin.Context, id, userId string) (*models.Subjec
 		}
 	}
 	return subject, nil
+}
+
+func ModifySubject(c *gin.Context, id string, request subject.ModifySubjectRequest) (*models.Subject, *config.APIError) {
+	//Get current user
+	curUser, _ := utils.GetCurrentUser(c)
+	if curUser == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+	}
+
+	subject, _ := repository.FindSubjectByIdAndUserId(c, id, curUser.ID.Hex())
+	if subject == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusNotFound,
+			Message: "Task not found",
+		}
+	}
+
+	subject.Name = request.Name
+
+	// Update task
+	res, _ := repository.UpdateSubject(c, subject)
+	if res == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Failed to update subject",
+		}
+	}
+
+	return res, nil
 }

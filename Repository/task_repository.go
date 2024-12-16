@@ -61,7 +61,7 @@ func InsertTask(ctx *gin.Context, task *models.Task) (*models.Task, error) {
 
 func FindTaskByIdAndUserId(ctx *gin.Context, id string, userId string) (*models.Task, error) {
 	var task *models.Task
-	err := config.TaskCollection.FindOne(ctx, bson.M{"_id": utils.ConvertStringToObjectID(id), "user._id": utils.ConvertStringToObjectID(userId)}).Decode(&task)
+	err := config.TaskCollection.FindOne(ctx, bson.M{"_id": utils.ConvertStringToObjectID(id), "user": utils.ConvertStringToObjectID(userId)}).Decode(&task)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func FindTaskByIdAndUserId(ctx *gin.Context, id string, userId string) (*models.
 }
 
 func UpdateTask(ctx *gin.Context, task *models.Task) (*models.Task, error) {
-	filter := bson.M{"_id": task.ID}
+	filter := bson.M{"_id": task.ID, "is_deleted": false}
 	update := bson.M{"$set": bson.M{
 		"name":                 task.Name,
 		"description":          task.Description,
@@ -80,6 +80,7 @@ func UpdateTask(ctx *gin.Context, task *models.Task) (*models.Task, error) {
 		"estimated_end_time":   task.EstimatedEndTime,
 		"actual_start_time":    task.ActualStartTime,
 		"actual_end_time":      task.ActualEndTime,
+		"updated_at":           primitive.DateTime(utils.GetCurrentTime()),
 	}}
 
 	_, err := config.TaskCollection.UpdateOne(ctx, filter, update)
@@ -91,8 +92,11 @@ func UpdateTask(ctx *gin.Context, task *models.Task) (*models.Task, error) {
 }
 
 func DeleteTask(ctx *gin.Context, task *models.Task) (*models.Task, error) {
-	filter := bson.M{"_id": task.ID}
-	update := bson.M{"$set": bson.M{"is_deleted": true}}
+	filter := bson.M{"_id": task.ID, "is_deleted": false}
+	update := bson.M{"$set": bson.M{
+		"is_deleted": true,
+		"updated_at": primitive.DateTime(utils.GetCurrentTime()),
+	}}
 	_, err := config.TaskCollection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return nil, err
