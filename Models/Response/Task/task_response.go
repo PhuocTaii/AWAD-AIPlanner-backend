@@ -1,6 +1,7 @@
 package task
 
 import (
+	models "project/Models"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -11,8 +12,8 @@ type GetTaskResponse struct {
 	Name        string             `bson:"name" json:"name"`
 	Description string             `bson:"description" json:"description"`
 	//Reference to subject
-	Subject string `bson:"subject" json:"subject"`
-	User    string `bson:"user" json:"user"`
+	Subject *models.Subject `bson:"subject" json:"subject"`
+	User    *models.User    `bson:"user" json:"user"`
 	//Priority and Status of the task using enum
 	Priority           string     `bson:"priority" json:"priority"`
 	Status             string     `bson:"status" json:"status"`
