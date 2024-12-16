@@ -13,7 +13,7 @@ import (
 func CreateTimerSetting(c *gin.Context, curUser *models.User) (*models.TimerSetting, *config.APIError) {
 	// Insert timer setting
 	timerSetting := &models.TimerSetting{
-		User:       *curUser,
+		User:       curUser.ID,
 		FocusTime:  25,
 		ShortBreak: 5,
 		LongBreak:  15,

@@ -21,7 +21,7 @@ func FindSubjectById(ctx *gin.Context, id string) (*models.Subject, error) {
 
 func FindSubjectByIdAndUserId(ctx *gin.Context, id, userId string) (*models.Subject, error) {
 	var subject *models.Subject
-	err := config.SubjectCollection.FindOne(ctx, bson.M{"_id": utils.ConvertStringToObjectID(id), "user._id": utils.ConvertStringToObjectID(userId)}).Decode(&subject)
+	err := config.SubjectCollection.FindOne(ctx, bson.M{"_id": utils.ConvertStringToObjectID(id), "user": utils.ConvertStringToObjectID(userId)}).Decode(&subject)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func FindSubjectByIdAndUserId(ctx *gin.Context, id, userId string) (*models.Subj
 }
 
 func FindAllUserSubject(ctx *gin.Context, userId string) ([]models.Subject, error) {
-	cursor, err := config.SubjectCollection.Find(ctx, bson.M{"user._id": utils.ConvertStringToObjectID(userId), "is_deleted": false})
+	cursor, err := config.SubjectCollection.Find(ctx, bson.M{"user": utils.ConvertStringToObjectID(userId), "is_deleted": false})
 	if err != nil {
 		return nil, err
 	}
@@ -64,4 +64,32 @@ func InsertSubject(ctx *gin.Context, subject *models.Subject) (*models.Subject, 
 	}
 
 	return response, nil
+}
+
+func UpdateSubject(ctx *gin.Context, subject *models.Subject) (*models.Subject, error) {
+	filter := bson.M{"_id": subject.ID, "is_deleted": false}
+	update := bson.M{"$set": bson.M{
+		"name":       subject.Name,
+		"updated_at": primitive.DateTime(utils.GetCurrentTime()),
+	}}
+
+	_, err := config.SubjectCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+
+	return subject, nil
+}
+
+func DeleteSubject(ctx *gin.Context, subject *models.Subject) (*models.Subject, error) {
+	filter := bson.M{"_id": subject.ID, "is_deleted": false}
+	update := bson.M{"$set": bson.M{
+		"is_deleted": true,
+		"updated_at": primitive.DateTime(utils.GetCurrentTime()),
+	}}
+	_, err := config.SubjectCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+	return subject, nil
 }

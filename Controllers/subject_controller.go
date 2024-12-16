@@ -36,3 +36,23 @@ func GetSubjects(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, tasks)
 }
+
+func UpdateSubject(c *gin.Context) {
+	var subjectId = c.Param("id")
+
+	var request subject.ModifySubjectRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		error := &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid task data",
+		}
+		config.HandleError(c, error)
+		return
+	}
+	subject, err := services.ModifySubject(c, subjectId, request)
+	if err != nil {
+		defer config.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, subject)
+}

@@ -51,8 +51,8 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 	task := &models.Task{
 		Name:               request.Name,
 		Description:        request.Description,
-		User:               curUser,
-		Subject:            subject,
+		User:               curUser.ID,
+		Subject:            subject.ID,
 		Priority:           priority,
 		Status:             constant.ToDo,
 		EstimatedStartTime: request.EstimatedStartTime,
@@ -68,12 +68,15 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 		}
 	}
 
+	resUser, _ := repository.FindUserById(c, res.User.Hex())
+	resSubject, _ := repository.FindSubjectById(c, res.Subject.Hex())
+
 	response := &responseTask.GetTaskResponse{
 		ID:                 res.ID,
 		Name:               res.Name,
 		Description:        res.Description,
-		Subject:            res.Subject,
-		User:               res.User,
+		Subject:            resSubject.Name,
+		User:               resUser.Email,
 		Priority:           constant.PriorityToString(res.Priority),
 		Status:             constant.StatusToString(res.Status),
 		EstimatedStartTime: res.EstimatedStartTime,
@@ -158,7 +161,7 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 	task.Name = request.Name
 	task.Description = request.Description
 	task.Priority = priority
-	task.Subject = subject
+	task.Subject = subject.ID
 	task.EstimatedStartTime = request.EstimatedStartTime
 	task.EstimatedEndTime = request.EstimatedEndTime
 
@@ -207,12 +210,15 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 		}
 	}
 
+	resUser, _ := repository.FindUserById(c, res.User.Hex())
+	resSubject, _ := repository.FindSubjectById(c, res.Subject.Hex())
+
 	response := &responseTask.GetTaskResponse{
 		ID:                 res.ID,
 		Name:               res.Name,
 		Description:        res.Description,
-		Subject:            res.Subject,
-		User:               res.User,
+		Subject:            resSubject.Name,
+		User:               resUser.Email,
 		Priority:           constant.PriorityToString(res.Priority),
 		Status:             constant.StatusToString(res.Status),
 		EstimatedStartTime: res.EstimatedStartTime,
@@ -302,12 +308,15 @@ func ModifyTaskStatus(c *gin.Context, id string, request task.ModifyTaskStatusRe
 		}
 	}
 
+	resUser, _ := repository.FindUserById(c, res.User.Hex())
+	resSubject, _ := repository.FindSubjectById(c, res.Subject.Hex())
+
 	response := &responseTask.GetTaskResponse{
 		ID:                 res.ID,
 		Name:               res.Name,
 		Description:        res.Description,
-		Subject:            res.Subject,
-		User:               res.User,
+		Subject:            resSubject.Name,
+		User:               resUser.Email,
 		Priority:           constant.PriorityToString(res.Priority),
 		Status:             constant.StatusToString(res.Status),
 		EstimatedStartTime: res.EstimatedStartTime,
@@ -348,12 +357,14 @@ func GetPagingTask(c *gin.Context, limit, page int, filter, sort bson.M) ([]*res
 	response := make([]*responseTask.GetTaskResponse, len(tasks))
 
 	for index, task := range tasks {
+		resUser, _ := repository.FindUserById(c, task.User.Hex())
+		resSubject, _ := repository.FindSubjectById(c, task.Subject.Hex())
 		response[index] = &responseTask.GetTaskResponse{
 			ID:                 task.ID,
 			Name:               task.Name,
 			Description:        task.Description,
-			Subject:            task.Subject,
-			User:               task.User,
+			Subject:            resSubject.Name,
+			User:               resUser.Email,
 			Priority:           constant.PriorityToString(task.Priority),
 			Status:             constant.StatusToString(task.Status),
 			EstimatedStartTime: task.EstimatedStartTime,

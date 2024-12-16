@@ -8,7 +8,7 @@ import (
 
 type FocusLog struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	User      User               `bson:"user_id" json:"user_id"`
+	User      primitive.ObjectID               `bson:"user_id" json:"user_id"`
 	FocusTime int                `bson:"focus_time" json:"focus_time"`
 	Date      *time.Time         `bson:"date" json:"date"`
 	CreatedAt *time.Time         `bson:"created_at" json:"created_at"`

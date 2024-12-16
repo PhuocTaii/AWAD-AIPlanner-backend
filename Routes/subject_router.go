@@ -12,5 +12,7 @@ func SetupSubjectRouter(apiGroup *gin.RouterGroup) {
 	{
 		subject.POST("/", middleware.RequireAuth, controllers.CreateSubject)
 		subject.GET("/", middleware.RequireAuth, controllers.GetSubjects)
+		subject.PUT("/:id", middleware.RequireAuth, controllers.UpdateSubject)
+		// subject.DELETE("/:id", middleware.RequireAuth, controllers.DeleteSubject)
 	}
 }
