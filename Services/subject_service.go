@@ -113,3 +113,41 @@ func ModifySubject(c *gin.Context, id string, request subject.ModifySubjectReque
 
 	return res, nil
 }
+
+func DeleteSubject(c *gin.Context, id string) (*models.Subject, *config.APIError) {
+	//Get current user
+	curUser, _ := utils.GetCurrentUser(c)
+	if curUser == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+	}
+
+	subject, _ := repository.FindSubjectByIdAndUserId(c, id, curUser.ID.Hex())
+	if subject == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusNotFound,
+			Message: "Subject not found",
+		}
+	}
+
+	// Update subject is_deleted to true
+	subject.IsDeleted = true
+
+	res, _ := repository.DeleteSubject(c, subject)
+	if res == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Failed to delete subject",
+		}
+	}
+
+	// Update task
+	go func() {
+		if err := ModifyDeletedSubjectTasks(c, id); err != nil {
+		}
+	}()
+
+	return res, nil
+}

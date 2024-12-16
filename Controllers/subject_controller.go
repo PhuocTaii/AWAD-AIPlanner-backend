@@ -56,3 +56,13 @@ func UpdateSubject(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, subject)
 }
+
+func DeleteSubject(c *gin.Context) {
+	var subjectId = c.Param("id")
+	res, err := services.DeleteSubject(c, subjectId)
+	if err != nil {
+		defer config.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}

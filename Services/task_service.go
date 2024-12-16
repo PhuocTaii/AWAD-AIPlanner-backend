@@ -413,3 +413,14 @@ func DeleteTask(c *gin.Context, id string) (*models.Task, *config.APIError) {
 	}
 	return res, nil
 }
+
+func ModifyDeletedSubjectTasks(c *gin.Context, subjectId string) *config.APIError {
+	err := repository.ModifyDeletedSubjectTasks(c, subjectId)
+	if err != nil {
+		return &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to modify tasks",
+		}
+	}
+	return nil
+}

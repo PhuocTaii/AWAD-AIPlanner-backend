@@ -118,3 +118,28 @@ func GetTasks(ctx *gin.Context, filter bson.M) ([]*models.Task, error) {
 
 	return tasks, nil
 }
+
+func ModifyDeletedSubjectTasks(ctx *gin.Context, subjectId string) error {
+	// cursor, err := config.TaskCollection.Find(ctx, bson.M{"subject": utils.ConvertStringToObjectID(subjectId), "user": utils.ConvertStringToObjectID(userId), "is_deleted": false})
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// defer cursor.Close(ctx)
+
+	// var tasks []*models.Task
+	// if err = cursor.All(ctx, &tasks); err != nil {
+	// 	return nil, err
+	// }
+
+	// return tasks, nil
+
+	filter := bson.M{"subject": utils.ConvertStringToObjectID(subjectId), "is_deleted": false}
+	update := bson.M{"$set": bson.M{
+		"subject": nil,
+	}}
+	_, err := config.TaskCollection.UpdateMany(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+	return nil
+}
