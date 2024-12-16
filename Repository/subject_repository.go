@@ -19,6 +19,15 @@ func FindSubjectById(ctx *gin.Context, id string) (*models.Subject, error) {
 	return subject, nil
 }
 
+func FindSubjectByIdAndUserId(ctx *gin.Context, id, userId string) (*models.Subject, error) {
+	var subject *models.Subject
+	err := config.SubjectCollection.FindOne(ctx, bson.M{"_id": utils.ConvertStringToObjectID(id), "user._id": utils.ConvertStringToObjectID(userId)}).Decode(&subject)
+	if err != nil {
+		return nil, err
+	}
+	return subject, nil
+}
+
 func FindAllUserSubject(ctx *gin.Context, userId string) ([]models.Subject, error) {
 	cursor, err := config.SubjectCollection.Find(ctx, bson.M{"user._id": utils.ConvertStringToObjectID(userId), "is_deleted": false})
 	if err != nil {

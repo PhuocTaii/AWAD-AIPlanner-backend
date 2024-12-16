@@ -59,7 +59,7 @@ func Feedback(c *gin.Context) (*genai.GenerateContentResponse, *config.APIError)
 		}
 	}
 
-	textPromt := "bạn là chuyên gia trong việc lên kế hoạch học tập, và bạn sẽ đánh giá kế hoạch sau đây và đưa ra nhận xét" + string(jsonString)
+	textPromt := "You are an expert in creating study plans, and you will evaluate the following plan and provide feedback." + string(jsonString)
 
 	client, err := genai.NewClient(c, option.WithAPIKey(os.Getenv("GEMINI_API_KEY")))
 	if err != nil {
