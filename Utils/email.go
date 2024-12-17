@@ -12,7 +12,7 @@ func SendVerificationEmail(toEmail, verificationCode string) error {
 	smtpHost := "smtp.gmail.com"
 	smtpPort := "587"
 
-	verificationLink := os.Getenv("EMAIL_VERIFICATION_URL") + verificationCode
+	verificationLink := os.Getenv("BACKEND_URL") + "/api/auth/verify?code=" + verificationCode
 	subject := "Subject: Email Verification\n"
 	body := fmt.Sprintf("Click the link to verify your account: %s", verificationLink)
 	message := []byte(subject + "\n" + body)
