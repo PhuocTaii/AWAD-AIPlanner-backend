@@ -76,7 +76,11 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 	}
 
 	resUser, _ := repository.FindUserById(c, res.User.Hex())
-	resSubject, _ := repository.FindSubjectById(c, res.Subject.Hex())
+
+	var resSubject *models.Subject = nil
+	if res.Subject != nil {
+		resSubject, _ = repository.FindSubjectById(c, res.Subject.Hex())
+	}
 
 	response := &responseTask.GetTaskResponse{
 		ID:                 res.ID,
@@ -220,7 +224,10 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 	}
 
 	resUser, _ := repository.FindUserById(c, res.User.Hex())
-	resSubject, _ := repository.FindSubjectById(c, res.Subject.Hex())
+	var resSubject *models.Subject = nil
+	if res.Subject != nil {
+		resSubject, _ = repository.FindSubjectById(c, res.Subject.Hex())
+	}
 
 	response := &responseTask.GetTaskResponse{
 		ID:                 res.ID,
@@ -318,7 +325,10 @@ func ModifyTaskStatus(c *gin.Context, id string, request task.ModifyTaskStatusRe
 	}
 
 	resUser, _ := repository.FindUserById(c, res.User.Hex())
-	resSubject, _ := repository.FindSubjectById(c, res.Subject.Hex())
+	var resSubject *models.Subject = nil
+	if res.Subject != nil {
+		resSubject, _ = repository.FindSubjectById(c, res.Subject.Hex())
+	}
 
 	response := &responseTask.GetTaskResponse{
 		ID:                 res.ID,
@@ -367,7 +377,10 @@ func GetPagingTask(c *gin.Context, limit, page int, filter, sort bson.M) ([]*res
 
 	for index, task := range tasks {
 		resUser, _ := repository.FindUserById(c, task.User.Hex())
-		resSubject, _ := repository.FindSubjectById(c, task.Subject.Hex())
+		var resSubject *models.Subject = nil
+		if task.Subject != nil {
+			resSubject, _ = repository.FindSubjectById(c, task.Subject.Hex())
+		}
 		response[index] = &responseTask.GetTaskResponse{
 			ID:                 task.ID,
 			Name:               task.Name,
