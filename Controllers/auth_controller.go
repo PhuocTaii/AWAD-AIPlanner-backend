@@ -47,6 +47,9 @@ func GoogleCallback(c *gin.Context) {
 	token, user, _, err := services.GoogleLogin(c)
 
 	if err != nil {
+		if err.Message == "Email already exists" {
+			c.Redirect(http.StatusSeeOther, os.Getenv("CLIENT_URL")+"/login")
+		}
 		config.HandleError(c, err)
 		return
 	}
