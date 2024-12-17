@@ -329,7 +329,7 @@ func ModifyTaskStatus(c *gin.Context, id string, request task.ModifyTaskStatusRe
 	// 	}
 	// }
 
-	if task.Status == constant.Completed && task.EstimatedEndTime.After(*utils.GetCurrent()) && status == constant.ToDo {
+	if task.Status == constant.Completed && task.EstimatedEndTime.Before(*utils.GetCurrent()) && status == constant.ToDo {
 		// task.Status = status
 		// set estimated end time to current time + 12 hours
 		newTime := utils.GetCurrent().Add(12 * 60 * 60 * 1000000000)
