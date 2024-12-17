@@ -12,7 +12,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.GetTaskResponse, *config.APIError) {
@@ -54,7 +53,7 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 	task := &models.Task{
 		Name:               request.Name,
 		Description:        request.Description,
-		User:               curUser.ID,
+		User:               &curUser.ID,
 		Priority:           priority,
 		Status:             status,
 		EstimatedStartTime: request.EstimatedStartTime,
@@ -62,9 +61,9 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 	}
 
 	if subject != nil {
-		task.Subject = subject.ID
+		task.Subject = &subject.ID
 	} else {
-		task.Subject = primitive.ObjectID{}
+		task.Subject = nil
 	}
 
 	// Insert task
@@ -206,9 +205,9 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 	}
 
 	if subject != nil {
-		task.Subject = subject.ID
+		task.Subject = &subject.ID
 	} else {
-		task.Subject = primitive.ObjectID{}
+		task.Subject = nil
 	}
 
 	// Update task

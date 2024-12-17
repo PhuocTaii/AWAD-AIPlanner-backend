@@ -21,7 +21,7 @@ func CreateFocusLog(c *gin.Context, request requestlog.CreateRequestLogRequest) 
 	}
 
 	focusLog := &models.FocusLog{
-		User:      curUser.ID,
+		User:      &curUser.ID,
 		FocusTime: request.FocusTime,
 	}
 

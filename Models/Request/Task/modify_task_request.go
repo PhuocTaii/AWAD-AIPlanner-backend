@@ -5,7 +5,7 @@ import (
 )
 
 type ModifyTaskRequest struct {
-	Name               string     `json:"name"`
+	Name               string     `json:"name" binding:"required"`
 	Description        string     `json:"description"`
 	SubjectId          string     `json:"subject_id"`
 	Priority           string     `json:"priority"`

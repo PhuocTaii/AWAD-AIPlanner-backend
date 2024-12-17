@@ -41,7 +41,7 @@ func CreateSubject(c *gin.Context, request subject.CreateSubjectRequest) (*model
 	// Create task
 	subject := &models.Subject{
 		Name: request.Name,
-		User: curUser.ID,
+		User: &curUser.ID,
 	}
 
 	// Insert task
