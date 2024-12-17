@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	config "project/Config"
 	constant "project/Models/Constant"
 	ai "project/Models/Response/AI"
@@ -13,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/generative-ai-go/genai"
 	"go.mongodb.org/mongo-driver/bson"
+	"google.golang.org/api/option"
 )
 
 func Feedback(c *gin.Context) (*genai.GenerateContentResponse, *config.APIError) {
@@ -31,12 +33,17 @@ func Feedback(c *gin.Context) (*genai.GenerateContentResponse, *config.APIError)
 			Message: "No subject found",
 		}
 	}
+	fmt.Println(SubjectList)
 
-	var taskResponses [][]*ai.AiTask
+	// var taskResponses [][]*ai.AiTask
+	taskResponses := make([][]*ai.AiTask, 0)
 
 	for _, subject := range SubjectList {
 		filter := bson.M{"subject": utils.ConvertStringToObjectID(subject.ID.Hex()), "user": utils.ConvertStringToObjectID(curUser.ID.Hex())}
 		tasks, _ := repository.GetTasks(c, filter)
+		if len(tasks) == 0 {
+			continue
+		}
 		var taskAI []*ai.AiTask
 		for _, task := range tasks {
 			tmpSubject, _ := repository.FindSubjectById(c, task.Subject.Hex())
@@ -64,7 +71,7 @@ func Feedback(c *gin.Context) (*genai.GenerateContentResponse, *config.APIError)
 			} else {
 				tmp.EstimatedEndTime = task.EstimatedEndTime.Format("02-01-2006 15:04:05")
 			}
-			fmt.Println(tmp)
+			// fmt.Println(tmp)
 			taskAI = append(taskAI, tmp)
 		}
 		taskResponses = append(taskResponses, taskAI)
@@ -79,28 +86,25 @@ func Feedback(c *gin.Context) (*genai.GenerateContentResponse, *config.APIError)
 		}
 	}
 
-	fmt.Println(string(jsonString))
+	textPromt := "You are an expert in creating study plans, and you will evaluate the following plan and provide feedback. The focus time of task is not necesssary. Your feedback should on potential adjustments, such as:" +
+		"Warning about overly tight schedules that may lead to burnout." +
+		"Recommending prioritization changes for improved focus and balance." + string(jsonString)
 
-	// textPromt := "You are an expert in creating study plans, and you will evaluate the following plan and provide feedback. The focus time of task is not necesssary. Your feedback should on potential adjustments, such as:" +
-	// 	"Warning about overly tight schedules that may lead to burnout." +
-	// 	"Recommending prioritization changes for improved focus and balance." + string(jsonString)
-
-	// client, err := genai.NewClient(c, option.WithAPIKey(os.Getenv("GEMINI_API_KEY")))
-	// if err != nil {
-	// 	return nil, &config.APIError{
-	// 		Code:    http.StatusInternalServerError,
-	// 		Message: "Failed to create client",
-	// 	}
-	// }
-	// defer client.Close()
-	// model := client.GenerativeModel(os.Getenv("GEMINI_MODEL"))
-	// resp, err := model.GenerateContent(c, genai.Text(textPromt))
-	// if err != nil {
-	// 	return nil, &config.APIError{
-	// 		Code:    http.StatusInternalServerError,
-	// 		Message: "Failed to generate content",
-	// 	}
-	// }
-	// return resp, nil
-	return nil, nil
+	client, err := genai.NewClient(c, option.WithAPIKey(os.Getenv("GEMINI_API_KEY")))
+	if err != nil {
+		return nil, &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to create client",
+		}
+	}
+	defer client.Close()
+	model := client.GenerativeModel(os.Getenv("GEMINI_MODEL"))
+	resp, err := model.GenerateContent(c, genai.Text(textPromt))
+	if err != nil {
+		return nil, &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to generate content",
+		}
+	}
+	return resp, nil
 }
