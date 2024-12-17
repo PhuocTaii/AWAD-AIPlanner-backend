@@ -70,8 +70,7 @@ func FindSubjectById(c *gin.Context, id string) (*models.Subject, *config.APIErr
 }
 
 func FindSubjectByIdAndUserId(c *gin.Context, id, userId string) (*models.Subject, *config.APIError) {
-	// Convert id to object id
-	// Find subject by id
+
 	subject, err := repository.FindSubjectByIdAndUserId(c, id, userId)
 	if err != nil {
 		return nil, &config.APIError{
