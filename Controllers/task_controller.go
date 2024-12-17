@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func CreateTask(c *gin.Context) {
@@ -84,7 +85,7 @@ func GetTasks(c *gin.Context) {
 	//if any of the query params are not provided, they will be ignored in the filter
 	filter := bson.M{}
 	if name != "" {
-		filter["name"] = name
+		filter["name"] = bson.M{"$regex": primitive.Regex{Pattern: name, Options: "i"}}
 	}
 	if !subject.IsZero() {
 		filter["subject"] = subject
