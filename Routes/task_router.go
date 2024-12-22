@@ -13,7 +13,8 @@ func SetupTaskRouter(apiGroup *gin.RouterGroup) {
 		task.POST("/", middleware.RequireAuth, controllers.CreateTask)
 		task.PUT("/:id", middleware.RequireAuth, controllers.UpdateTask)
 		task.GET("/", middleware.RequireAuth, controllers.GetTasks)
-		task.PUT("/delete/:id", middleware.RequireAuth, controllers.DeleteTask)
+		task.DELETE("/delete/:id", middleware.RequireAuth, controllers.DeleteTask)
 		task.PUT("/status/:id", middleware.RequireAuth, controllers.UpdateTaskStatus)
+		task.PUT("/focus/:id", middleware.RequireAuth, controllers.UpdateTaskFocus)
 	}
 }

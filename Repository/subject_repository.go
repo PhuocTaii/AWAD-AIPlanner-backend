@@ -40,6 +40,15 @@ func FindAllUserSubject(ctx *gin.Context, userId string) ([]models.Subject, erro
 	return subjects, nil
 }
 
+func IsSubjectExisted(ctx *gin.Context, name, userId string) bool {
+	var subject *models.Subject
+	isExist := config.SubjectCollection.FindOne(ctx, bson.M{"name": name, "user": utils.ConvertStringToObjectID(userId)}).Decode(&subject)
+	if isExist != nil {
+		return false
+	}
+	return true
+}
+
 func InsertSubject(ctx *gin.Context, subject *models.Subject) (*models.Subject, error) {
 	newSubject := &models.Subject{
 		Name:      subject.Name,

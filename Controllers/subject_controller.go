@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	config "project/Config"
+	models "project/Models"
 	subject "project/Models/Request/Subject"
 	services "project/Services"
 
@@ -20,7 +21,10 @@ func CreateSubject(c *gin.Context) {
 		config.HandleError(c, error)
 		return
 	}
-	task, err := services.CreateSubject(c, request)
+	subject := &models.Subject{
+		Name: request.Name,
+	}
+	task, err := services.CreateSubject(c, subject)
 	if err != nil {
 		defer config.HandleError(c, err)
 		return
@@ -41,6 +45,7 @@ func UpdateSubject(c *gin.Context) {
 	var subjectId = c.Param("id")
 
 	var request subject.ModifySubjectRequest
+
 	if err := c.ShouldBindJSON(&request); err != nil {
 		error := &config.APIError{
 			Code:    http.StatusBadRequest,
@@ -49,6 +54,7 @@ func UpdateSubject(c *gin.Context) {
 		config.HandleError(c, error)
 		return
 	}
+
 	subject, err := services.ModifySubject(c, subjectId, request)
 	if err != nil {
 		defer config.HandleError(c, err)

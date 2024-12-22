@@ -138,3 +138,22 @@ func DeleteTask(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, res)
 }
+
+func UpdateTaskFocus(c *gin.Context) {
+	var request task.UpdateTaskFocusRequest
+	var taskId = c.Param("id")
+	if err := c.ShouldBindJSON(&request); err != nil {
+		error := &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid task data",
+		}
+		config.HandleError(c, error)
+		return
+	}
+	task, err := services.ModifyTaskFocus(c, taskId, request)
+	if err != nil {
+		defer config.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, task)
+}
