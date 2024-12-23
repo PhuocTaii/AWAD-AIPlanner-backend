@@ -11,5 +11,6 @@ func SetupTimeSettingRouter(apiGroup *gin.RouterGroup) {
 	timeSetting := apiGroup.Group("/time-setting")
 	{
 		timeSetting.GET("/", middleware.RequireAuth, controllers.GetTimeSetting)
+		timeSetting.PUT("/", middleware.RequireAuth, controllers.UpdateTimeSetting)
 	}
 }

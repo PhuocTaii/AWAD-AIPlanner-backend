@@ -11,12 +11,14 @@ import (
 )
 
 func GetTodayFocusLog(ctx *gin.Context, user *models.User) (*models.FocusLog, error) {
+	curDay := utils.GetCurrent().Format("2006-01-02")
 	filter := bson.M{
-		"user_id": user.ID,
-		"date":    utils.GetCurrent().Format("2006-01-02"),
+		"user": user.ID,
+		"date": curDay,
 	}
+
 	var focusLog *models.FocusLog
-	err := config.SubjectCollection.FindOne(ctx, filter).Decode(&focusLog)
+	err := config.FocusLogCollection.FindOne(ctx, filter).Decode(&focusLog)
 	if err != nil {
 		return nil, err
 	}
