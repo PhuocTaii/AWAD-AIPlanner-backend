@@ -290,45 +290,6 @@ func ModifyTaskStatus(c *gin.Context, id string, request task.ModifyTaskStatusRe
 	}
 
 	// modify status
-
-	// if task.Status == constant.Completed && task.EstimatedEndTime.After(*utils.GetCurrent()) && status == constant.ToDo {
-	// 	task.Status = status
-	// 	// set estimated end time to current time + 12 hours
-	// 	newTime := utils.GetCurrent().Add(12 * 60 * 60 * 1000000000)
-	// 	task.EstimatedEndTime = &newTime
-	// } else {
-	// 	if task.Status == constant.Expired {
-	// 		if task.ActualStartTime == nil || task.ActualStartTime.After(*utils.GetCurrent()) {
-	// 			task.Status = constant.ToDo
-	// 		} else {
-	// 			task.Status = constant.InProgress
-	// 		}
-	// 	} else {
-	// 		//if change status to completed, set actual end time
-	// 		if status == constant.Completed {
-	// 			task.ActualEndTime = utils.GetCurrent()
-	// 			//if change status from to do to completed, set actual start time to current time
-	// 			if task.Status == constant.ToDo {
-	// 				task.ActualStartTime = utils.GetCurrent()
-	// 			}
-	// 		}
-	// 		//if change status to to do, set actual start time and end time to nil
-	// 		if status == constant.ToDo {
-	// 			task.ActualStartTime = nil
-	// 			task.ActualEndTime = nil
-	// 		}
-	// 		//if change status to in progress, set actual start time to current time
-	// 		if status == constant.InProgress {
-	// 			task.ActualStartTime = utils.GetCurrent()
-	// 			if task.Status == constant.Completed {
-	// 				task.ActualEndTime = nil
-	// 			}
-	// 		}
-
-	// 		task.Status = status
-	// 	}
-	// }
-
 	if task.Status == constant.Completed && task.EstimatedEndTime.Before(*utils.GetCurrent()) && status == constant.ToDo {
 		// task.Status = status
 		// set estimated end time to current time + 12 hours
@@ -492,4 +453,68 @@ func ModifyDeletedSubjectTasks(c *gin.Context, subjectId string) *config.APIErro
 		}
 	}
 	return nil
+}
+
+func UpdateTaskFocus(c *gin.Context, taskId string, request task.UpdateTaskFocusRequest) (*models.Task, *config.APIError) {
+	//Get current user
+	curUser, _ := utils.GetCurrentUser(c)
+	if curUser == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+	}
+
+	task, _ := repository.FindTaskByIdAndUserId(c, taskId, curUser.ID.Hex())
+	if task == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusNotFound,
+			Message: "Task not found",
+		}
+	}
+
+	if task.Status != constant.InProgress {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Cannot update focus time for task that is not in progress",
+		}
+	}
+
+	if request.FocusTime < 0 {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid focus time",
+		}
+	}
+
+	//update task focus time
+	task.FocusTime = request.FocusTime
+
+	res, _ := repository.UpdateTaskFocus(c, task)
+	if res == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Failed to update task",
+		}
+	}
+
+	go func() {
+		//TODO: update or create focus log
+		existingFocusLog, _ := repository.GetTodayFocusLog(c, curUser)
+		if existingFocusLog != nil {
+			//there is a focus log for today
+			existingFocusLog.FocusTime += request.FocusTime
+			_, _ = repository.UpdateFocusLog(c, existingFocusLog)
+		} else {
+			//no focus log for today
+			focusLog := &models.FocusLog{
+				User:      &curUser.ID,
+				FocusTime: task.FocusTime,
+				Date:      utils.GetCurrent(),
+			}
+			_, _ = repository.InsertFocusLog(c, focusLog)
+		}
+	}()
+
+	return res, nil
 }

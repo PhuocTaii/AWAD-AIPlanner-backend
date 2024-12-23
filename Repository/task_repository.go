@@ -68,6 +68,21 @@ func FindTaskByIdAndUserId(ctx *gin.Context, id string, userId string) (*models.
 	return task, nil
 }
 
+func UpdateTaskFocus(ctx *gin.Context, task *models.Task) (*models.Task, error) {
+	filter := bson.M{"_id": task.ID, "is_deleted": false}
+	update := bson.M{"$set": bson.M{
+		"focus_time": task.FocusTime,
+		"updated_at": primitive.DateTime(utils.GetCurrentTime()),
+	}}
+
+	_, err := config.TaskCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+
+	return task, nil
+}
+
 func UpdateTask(ctx *gin.Context, task *models.Task) (*models.Task, error) {
 	filter := bson.M{"_id": task.ID, "is_deleted": false}
 	update := bson.M{"$set": bson.M{
@@ -120,18 +135,6 @@ func GetTasks(ctx *gin.Context, filter bson.M) ([]*models.Task, error) {
 }
 
 func ModifyDeletedSubjectTasks(ctx *gin.Context, subjectId string) error {
-	// cursor, err := config.TaskCollection.Find(ctx, bson.M{"subject": utils.ConvertStringToObjectID(subjectId), "user": utils.ConvertStringToObjectID(userId), "is_deleted": false})
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// defer cursor.Close(ctx)
-
-	// var tasks []*models.Task
-	// if err = cursor.All(ctx, &tasks); err != nil {
-	// 	return nil, err
-	// }
-
-	// return tasks, nil
 
 	filter := bson.M{"subject": utils.ConvertStringToObjectID(subjectId), "is_deleted": false}
 	update := bson.M{"$set": bson.M{

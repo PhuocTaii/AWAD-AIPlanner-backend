@@ -3,9 +3,12 @@ package constant
 import "fmt"
 
 const (
-	High = iota
+	Low = iota
 	Medium
-	Low
+	High
+	// High = iota
+	// Medium
+	// Low
 )
 
 func PriorityToString(priority int) string {

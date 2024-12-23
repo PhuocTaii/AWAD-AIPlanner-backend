@@ -13,6 +13,6 @@ func SetupSubjectRouter(apiGroup *gin.RouterGroup) {
 		subject.POST("/", middleware.RequireAuth, controllers.CreateSubject)
 		subject.GET("/", middleware.RequireAuth, controllers.GetSubjects)
 		subject.PUT("/:id", middleware.RequireAuth, controllers.UpdateSubject)
-		subject.PUT("/delete/:id", middleware.RequireAuth, controllers.DeleteSubject)
+		subject.DELETE("/delete/:id", middleware.RequireAuth, controllers.DeleteSubject)
 	}
 }

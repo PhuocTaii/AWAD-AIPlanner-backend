@@ -29,7 +29,7 @@ func GetSubjects(c *gin.Context) ([]models.Subject, *config.APIError) {
 	return subjects, nil
 }
 
-func CreateSubject(c *gin.Context, request subject.CreateSubjectRequest) (*models.Subject, *config.APIError) {
+func CreateSubject(c *gin.Context, subject *models.Subject) (*models.Subject, *config.APIError) {
 	//Get current user
 	curUser, _ := utils.GetCurrentUser(c)
 	if curUser == nil {
@@ -38,14 +38,32 @@ func CreateSubject(c *gin.Context, request subject.CreateSubjectRequest) (*model
 			Message: "Unauthorized",
 		}
 	}
+
+	// Check if subject name is empty
+	if subject.Name == "" {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Subject name is required",
+		}
+	}
+
+	// Check if subject name is already exist
+	IsSubjectExisted := repository.IsSubjectExisted(c, subject.Name, curUser.ID.Hex())
+	if IsSubjectExisted {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Subject name is already exist",
+		}
+	}
+
 	// Create task
-	subject := &models.Subject{
-		Name: request.Name,
+	createSubject := &models.Subject{
+		Name: subject.Name,
 		User: &curUser.ID,
 	}
 
 	// Insert task
-	res, _ := repository.InsertSubject(c, subject)
+	res, _ := repository.InsertSubject(c, createSubject)
 	if res == nil {
 		return nil, &config.APIError{
 			Code:    http.StatusBadRequest,
