@@ -38,7 +38,7 @@ func GetTimeSetting(ctx *gin.Context) (*models.TimerSetting, *config.APIError) {
 		}
 	}
 
-	timerSetting, _ := repository.GetTimerSettingByUserId(ctx, curUser.ID.Hex())
+	timerSetting, _ := repository.GetTimerSettingByUserId(ctx, curUser)
 	if timerSetting == nil {
 		return nil, &config.APIError{
 			Code:    http.StatusNotFound,

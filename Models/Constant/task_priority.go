@@ -6,9 +6,6 @@ const (
 	Low = iota
 	Medium
 	High
-	// High = iota
-	// Medium
-	// Low
 )
 
 func PriorityToString(priority int) string {
