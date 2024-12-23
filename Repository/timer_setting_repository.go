@@ -40,9 +40,12 @@ func InsertTimerSetting(ctx *gin.Context, timerSetting *models.TimerSetting) (*m
 	return response, nil
 }
 
-func GetTimerSettingByUserId(ctx *gin.Context, userId string) (*models.TimerSetting, error) {
+func GetTimerSettingByUserId(ctx *gin.Context, user *models.User) (*models.TimerSetting, error) {
 	var timerSetting models.TimerSetting
-	err := config.TimerSettingsCollection.FindOne(ctx, bson.M{"user._id": utils.ConvertStringToObjectID(userId)}).Decode(&timerSetting)
+	filter := bson.M{
+		"user": user.ID,
+	}
+	err := config.TimerSettingsCollection.FindOne(ctx, filter).Decode(&timerSetting)
 	if err != nil {
 		return nil, err
 	}
