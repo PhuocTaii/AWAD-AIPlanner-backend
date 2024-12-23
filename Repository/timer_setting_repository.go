@@ -52,3 +52,24 @@ func GetTimerSettingByUserId(ctx *gin.Context, user *models.User) (*models.Timer
 
 	return &timerSetting, nil
 }
+
+func UpdateTimerSetting(ctx *gin.Context, timerSetting *models.TimerSetting) (*models.TimerSetting, error) {
+	filter := bson.M{
+		"user": timerSetting.User,
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"focus_time":       timerSetting.FocusTime,
+			"short_break_time": timerSetting.ShortBreak,
+			"long_break_time":  timerSetting.LongBreak,
+			"interval":         timerSetting.Interval,
+			"updated_at":       utils.GetCurrent(),
+		},
+	}
+	_, err := config.TimerSettingsCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+
+	return timerSetting, nil
+}

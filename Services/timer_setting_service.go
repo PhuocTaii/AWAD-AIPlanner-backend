@@ -48,3 +48,36 @@ func GetTimeSetting(ctx *gin.Context) (*models.TimerSetting, *config.APIError) {
 
 	return timerSetting, nil
 }
+
+func UpdateTimeSetting(c *gin.Context, timerSetting *models.TimerSetting) (*models.TimerSetting, *config.APIError) {
+	curUser, _ := utils.GetCurrentUser(c)
+	if curUser == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+	}
+
+	userTimeSetting, _ := repository.GetTimerSettingByUserId(c, curUser)
+
+	if userTimeSetting == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusNotFound,
+			Message: "Timer setting not found",
+		}
+	}
+
+	userTimeSetting.FocusTime = timerSetting.FocusTime
+	userTimeSetting.ShortBreak = timerSetting.ShortBreak
+	userTimeSetting.LongBreak = timerSetting.LongBreak
+	userTimeSetting.Interval = timerSetting.Interval
+
+	res, _ := repository.UpdateTimerSetting(c, userTimeSetting)
+	if res == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusNotFound,
+			Message: "Timer setting not found",
+		}
+	}
+	return res, nil
+}

@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"net/http"
 	config "project/Config"
 	models "project/Models"
@@ -504,12 +503,10 @@ func UpdateTaskFocus(c *gin.Context, taskId string, request task.UpdateTaskFocus
 		existingFocusLog, _ := repository.GetTodayFocusLog(c, curUser)
 		if existingFocusLog != nil {
 			//there is a focus log for today
-			fmt.Println("Thanh Van")
 			existingFocusLog.FocusTime += request.FocusTime
 			_, _ = repository.UpdateFocusLog(c, existingFocusLog)
 		} else {
 			//no focus log for today
-			fmt.Println("xinh dep")
 			focusLog := &models.FocusLog{
 				User:      &curUser.ID,
 				FocusTime: task.FocusTime,
