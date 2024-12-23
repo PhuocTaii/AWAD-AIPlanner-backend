@@ -6,8 +6,22 @@ import (
 	utils "project/Utils"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+func GetTodayFocusLog(ctx *gin.Context, user *models.User) (*models.FocusLog, error) {
+	filter := bson.M{
+		"user_id": user.ID,
+		"date":    utils.GetCurrent().Format("2006-01-02"),
+	}
+	var focusLog *models.FocusLog
+	err := config.SubjectCollection.FindOne(ctx, filter).Decode(&focusLog)
+	if err != nil {
+		return nil, err
+	}
+	return focusLog, nil
+}
 
 func InsertFocusLog(ctx *gin.Context, focusLog *models.FocusLog) (*models.FocusLog, error) {
 	newFocusLog := &models.FocusLog{
@@ -33,4 +47,23 @@ func InsertFocusLog(ctx *gin.Context, focusLog *models.FocusLog) (*models.FocusL
 	}
 
 	return response, nil
+}
+
+func UpdateFocusLog(ctx *gin.Context, focusLog *models.FocusLog) (*models.FocusLog, error) {
+	filter := bson.M{
+		"_id": focusLog.ID,
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"focus_time": focusLog.FocusTime,
+			"updated_at": utils.GetCurrent(),
+		},
+	}
+
+	_, err := config.FocusLogCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+
+	return focusLog, nil
 }

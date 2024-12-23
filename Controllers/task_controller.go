@@ -150,7 +150,7 @@ func UpdateTaskFocus(c *gin.Context) {
 		config.HandleError(c, error)
 		return
 	}
-	task, err := services.ModifyTaskFocus(c, taskId, request)
+	task, err := services.UpdateTaskFocus(c, taskId, request)
 	if err != nil {
 		defer config.HandleError(c, err)
 		return

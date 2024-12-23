@@ -455,7 +455,7 @@ func ModifyDeletedSubjectTasks(c *gin.Context, subjectId string) *config.APIErro
 	return nil
 }
 
-func ModifyTaskFocus(c *gin.Context, taskId string, request task.UpdateTaskFocusRequest) (*models.Task, *config.APIError) {
+func UpdateTaskFocus(c *gin.Context, taskId string, request task.UpdateTaskFocusRequest) (*models.Task, *config.APIError) {
 	//Get current user
 	curUser, _ := utils.GetCurrentUser(c)
 	if curUser == nil {
@@ -487,6 +487,7 @@ func ModifyTaskFocus(c *gin.Context, taskId string, request task.UpdateTaskFocus
 		}
 	}
 
+	//update task focus time
 	task.FocusTime = request.FocusTime
 
 	res, _ := repository.UpdateTaskFocus(c, task)
@@ -496,6 +497,24 @@ func ModifyTaskFocus(c *gin.Context, taskId string, request task.UpdateTaskFocus
 			Message: "Failed to update task",
 		}
 	}
+
+	go func() {
+		//TODO: update or create focus log
+		existingFocusLog, _ := repository.GetTodayFocusLog(c, curUser)
+		if existingFocusLog != nil {
+			//there is a focus log for today
+			existingFocusLog.FocusTime += request.FocusTime
+			_, _ = repository.UpdateFocusLog(c, existingFocusLog)
+		} else {
+			//no focus log for today
+			focusLog := &models.FocusLog{
+				User:      &curUser.ID,
+				FocusTime: task.FocusTime,
+				Date:      utils.GetCurrent(),
+			}
+			_, _ = repository.InsertFocusLog(c, focusLog)
+		}
+	}()
 
 	return res, nil
 }
