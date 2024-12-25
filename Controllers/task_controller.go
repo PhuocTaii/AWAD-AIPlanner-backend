@@ -70,6 +70,15 @@ func UpdateTaskStatus(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, task)
 }
+func GetTaskById(c *gin.Context) {
+	taskId := c.Param("id")
+	task, err := services.GetTaskById(c, taskId)
+	if err != nil {
+		defer config.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, task)
+}
 
 func GetTasks(c *gin.Context) {
 

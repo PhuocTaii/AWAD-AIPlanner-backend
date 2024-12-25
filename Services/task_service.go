@@ -360,6 +360,56 @@ func ModifyTaskStatus(c *gin.Context, id string, request task.ModifyTaskStatusRe
 	return response, nil
 }
 
+func GetTaskById(c *gin.Context, id string) (*responseTask.GetTaskResponse, *config.APIError) {
+	//Get current user
+	curUser, _ := utils.GetCurrentUser(c)
+	if curUser == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+	}
+
+	task, _ := repository.FindTaskByIdAndUserId(c, id, curUser.ID.Hex())
+
+	if task == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusNotFound,
+			Message: "Task not found",
+		}
+	}
+
+	var subject *models.Subject = nil
+
+	if task.Subject != nil {
+		subject, _ := repository.FindSubjectById(c, task.Subject.Hex())
+		if subject != nil && subject.IsDeleted {
+			return nil, &config.APIError{
+				Code:    http.StatusNotFound,
+				Message: "Subject not found",
+			}
+		}
+	}
+
+	return &responseTask.GetTaskResponse{
+		ID:                 task.ID,
+		Name:               task.Name,
+		Description:        task.Description,
+		Subject:            subject,
+		User:               curUser,
+		Priority:           constant.PriorityToString(task.Priority),
+		Status:             constant.StatusToString(task.Status),
+		EstimatedStartTime: task.EstimatedStartTime,
+		EstimatedEndTime:   task.EstimatedEndTime,
+		ActualStartTime:    task.ActualStartTime,
+		ActualEndTime:      task.ActualEndTime,
+		FocusTime:          task.FocusTime,
+		IsDeleted:          task.IsDeleted,
+		CreatedAt:          task.CreatedAt,
+		UpdatedAt:          task.UpdatedAt,
+	}, nil
+}
+
 func GetPagingTask(c *gin.Context, limit, page int, filter, sort bson.M) ([]*responseTask.GetTaskResponse, int, int, *config.APIError) {
 	curUser, _ := utils.GetCurrentUser(c)
 	if curUser == nil {
