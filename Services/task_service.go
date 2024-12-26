@@ -129,6 +129,14 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 		}
 	}
 
+	//cannot modify status of expired task
+	if task.Status == constant.Expired && request.Status != "Expired" {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Cannot modify status of expired task",
+		}
+	}
+
 	if (request.Name == "") && (request.Description == "") && (request.SubjectId == "") && (request.Priority == "") && (request.Status == "") && (request.EstimatedStartTime == nil) && (request.EstimatedEndTime == nil) {
 		return nil, &config.APIError{
 			Code:    http.StatusBadRequest,
@@ -284,6 +292,14 @@ func ModifyTaskStatus(c *gin.Context, id string, request task.ModifyTaskStatusRe
 		return nil, &config.APIError{
 			Code:    http.StatusBadRequest,
 			Message: "Cannot modify task to expired",
+		}
+	}
+
+	//cannot modify status of expired task
+	if task.Status == constant.Expired && request.Status != "Expired" {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Cannot modify status of expired task",
 		}
 	}
 
