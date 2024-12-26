@@ -177,12 +177,6 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 		// set estimated end time to current time + 12 hours
 		newTime := utils.GetCurrent().Add(12 * 60 * 60 * 1000000000)
 		task.EstimatedEndTime = &newTime
-	} else if task.Status == constant.Expired {
-		if task.ActualStartTime == nil || task.ActualStartTime.After(*utils.GetCurrent()) {
-			task.Status = constant.ToDo
-		} else {
-			task.Status = constant.InProgress
-		}
 	} else {
 		//if change status to completed, set actual end time
 		if status == constant.Completed {
@@ -210,6 +204,19 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 
 	if task.EstimatedEndTime != nil && task.EstimatedEndTime.Before(*utils.GetCurrent()) {
 		task.Status = constant.Expired
+	}
+
+	if task.Status == constant.Expired && task.EstimatedEndTime != nil {
+		if task.EstimatedEndTime.After(*utils.GetCurrent()) {
+			if task.ActualStartTime == nil || task.ActualStartTime.After(*utils.GetCurrent()) {
+				task.Status = constant.ToDo
+				task.ActualEndTime = nil
+			} else {
+				task.Status = constant.InProgress
+				task.ActualStartTime = utils.GetCurrent()
+				task.ActualEndTime = nil
+			}
+		}
 	}
 
 	if subject != nil {
@@ -294,12 +301,6 @@ func ModifyTaskStatus(c *gin.Context, id string, request task.ModifyTaskStatusRe
 		// set estimated end time to current time + 12 hours
 		newTime := utils.GetCurrent().Add(12 * 60 * 60 * 1000000000)
 		task.EstimatedEndTime = &newTime
-	} else if task.Status == constant.Expired {
-		if task.ActualStartTime == nil || task.ActualStartTime.After(*utils.GetCurrent()) {
-			task.Status = constant.ToDo
-		} else {
-			task.Status = constant.InProgress
-		}
 	} else {
 		//if change status to completed, set actual end time
 		if status == constant.Completed {
