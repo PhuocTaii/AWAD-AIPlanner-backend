@@ -16,7 +16,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-func Feedback(c *gin.Context) (*genai.GenerateContentResponse, *config.APIError) {
+func AIGen(c *gin.Context, aiType string) (*genai.GenerateContentResponse, *config.APIError) {
 	curUser, _ := utils.GetCurrentUser(c)
 	if curUser == nil {
 		return nil, &config.APIError{
@@ -83,9 +83,18 @@ func Feedback(c *gin.Context) (*genai.GenerateContentResponse, *config.APIError)
 		}
 	}
 
-	textPrompt := "You are an expert in creating study plans, and you will evaluate the following plan and provide feedback. The focus time of task is not necesssary. Your feedback should on potential adjustments, such as:" +
-		"Warning about overly tight schedules that may lead to burnout." +
-		"Recommending prioritization changes for improved focus and balance." + string(jsonString)
+	var textPrompt string
+
+	if aiType == "suggest" {
+		textPrompt = "You are an expert in creating study plans, and you will evaluate the following plan and provide feedback. You must skip the task's focus time. Your feedback should on potential adjustments, such as:" +
+			"Warning about overly tight schedules that may lead to burnout." +
+			"Recommending prioritization changes for improved focus and balance." + string(jsonString)
+	} else if aiType == "analyze" {
+		textPrompt = "You are an expert in analyzing study plans, and you will analyze the following plan and provide feedback. You must focus on task's focus time. Your feedback should:" +
+			"Identifying areas where the user is excelling." +
+			"Suggesting subjects or tasks that may need more attention." +
+			"Offering motivational feedback to encourage consistency and improvement." + string(jsonString)
+	}
 
 	client, err := genai.NewClient(c, option.WithAPIKey(os.Getenv("GEMINI_API_KEY")))
 	if err != nil {

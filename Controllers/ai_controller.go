@@ -8,9 +8,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Feedback(c *gin.Context) {
+func AiFeedback(c *gin.Context) {
 
-	resp, err := services.Feedback(c)
+	aiType := c.Query("type")
+
+	if aiType == "" {
+		config.HandleError(c, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid AI type",
+		})
+		return
+	}
+
+	resp, err := services.AIGen(c, aiType)
 
 	if err != nil {
 		config.HandleError(c, err)

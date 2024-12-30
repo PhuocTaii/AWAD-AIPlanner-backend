@@ -25,6 +25,7 @@ func CreateTask(c *gin.Context) {
 		config.HandleError(c, error)
 		return
 	}
+
 	task, err := services.CreateTask(c, request)
 	if err != nil {
 		defer config.HandleError(c, err)

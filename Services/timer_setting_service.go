@@ -50,6 +50,12 @@ func GetTimeSetting(ctx *gin.Context) (*models.TimerSetting, *config.APIError) {
 }
 
 func UpdateTimeSetting(c *gin.Context, timerSetting *models.TimerSetting) (*models.TimerSetting, *config.APIError) {
+	if timerSetting.Interval < 1 || timerSetting.FocusTime < 1 || timerSetting.ShortBreak < 0 || timerSetting.LongBreak < 0 {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid time setting",
+		}
+	}
 	curUser, _ := utils.GetCurrentUser(c)
 	if curUser == nil {
 		return nil, &config.APIError{
