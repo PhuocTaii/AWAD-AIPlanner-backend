@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	config "project/Config"
+	models "project/Models"
 	focuslog "project/Models/Request/FocusLog"
 	services "project/Services"
 
@@ -17,7 +18,11 @@ func CreateFocusLog(c *gin.Context) {
 		return
 	}
 
-	focusLog, err := services.CreateFocusLog(c, request)
+	tmp := &models.FocusLog{
+		FocusTime: request.FocusTime,
+	}
+
+	focusLog, err := services.CreateFocusLog(c, tmp)
 	if err != nil {
 		config.HandleError(c, err)
 		return
