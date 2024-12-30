@@ -2,7 +2,6 @@ package services
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 	config "project/Config"
@@ -33,7 +32,6 @@ func Feedback(c *gin.Context) (*genai.GenerateContentResponse, *config.APIError)
 			Message: "No subject found",
 		}
 	}
-	fmt.Println(SubjectList)
 
 	// var taskResponses [][]*ai.AiTask
 	taskResponses := make([][]*ai.AiTask, 0)
@@ -71,7 +69,6 @@ func Feedback(c *gin.Context) (*genai.GenerateContentResponse, *config.APIError)
 			} else {
 				tmp.EstimatedEndTime = task.EstimatedEndTime.Format("02-01-2006 15:04:05")
 			}
-			// fmt.Println(tmp)
 			taskAI = append(taskAI, tmp)
 		}
 		taskResponses = append(taskResponses, taskAI)
@@ -86,7 +83,7 @@ func Feedback(c *gin.Context) (*genai.GenerateContentResponse, *config.APIError)
 		}
 	}
 
-	textPromt := "You are an expert in creating study plans, and you will evaluate the following plan and provide feedback. The focus time of task is not necesssary. Your feedback should on potential adjustments, such as:" +
+	textPrompt := "You are an expert in creating study plans, and you will evaluate the following plan and provide feedback. The focus time of task is not necesssary. Your feedback should on potential adjustments, such as:" +
 		"Warning about overly tight schedules that may lead to burnout." +
 		"Recommending prioritization changes for improved focus and balance." + string(jsonString)
 
@@ -99,7 +96,7 @@ func Feedback(c *gin.Context) (*genai.GenerateContentResponse, *config.APIError)
 	}
 	defer client.Close()
 	model := client.GenerativeModel(os.Getenv("GEMINI_MODEL"))
-	resp, err := model.GenerateContent(c, genai.Text(textPromt))
+	resp, err := model.GenerateContent(c, genai.Text(textPrompt))
 	if err != nil {
 		return nil, &config.APIError{
 			Code:    http.StatusInternalServerError,

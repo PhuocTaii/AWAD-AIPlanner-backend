@@ -3,14 +3,14 @@ package controllers
 import (
 	"net/http"
 	config "project/Config"
-	requestlog "project/Models/Request/RequestLog"
+	focuslog "project/Models/Request/FocusLog"
 	services "project/Services"
 
 	"github.com/gin-gonic/gin"
 )
 
 func CreateFocusLog(c *gin.Context) {
-	var request requestlog.CreateRequestLogRequest
+	var request focuslog.CreateFocusLogRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
