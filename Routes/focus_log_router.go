@@ -11,5 +11,6 @@ func SetupFocusLogRouter(apiGroup *gin.RouterGroup) {
 	focusLog := apiGroup.Group("/focus_log")
 	{
 		focusLog.POST("/", middleware.RequireAuth, controllers.CreateFocusLog)
+		// focusLog.POST("/", middleware.RequireAuth, controllers.GetFocusLog)
 	}
 }
