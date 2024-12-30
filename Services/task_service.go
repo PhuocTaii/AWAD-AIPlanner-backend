@@ -129,6 +129,14 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 		}
 	}
 
+	//cannot modify status of expired task
+	if task.Status == constant.Expired && request.Status != "Expired" {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Cannot modify status of expired task",
+		}
+	}
+
 	if (request.Name == "") && (request.Description == "") && (request.SubjectId == "") && (request.Priority == "") && (request.Status == "") && (request.EstimatedStartTime == nil) && (request.EstimatedEndTime == nil) {
 		return nil, &config.APIError{
 			Code:    http.StatusBadRequest,
@@ -177,12 +185,6 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 		// set estimated end time to current time + 12 hours
 		newTime := utils.GetCurrent().Add(12 * 60 * 60 * 1000000000)
 		task.EstimatedEndTime = &newTime
-	} else if task.Status == constant.Expired {
-		if task.ActualStartTime == nil || task.ActualStartTime.After(*utils.GetCurrent()) {
-			task.Status = constant.ToDo
-		} else {
-			task.Status = constant.InProgress
-		}
 	} else {
 		//if change status to completed, set actual end time
 		if status == constant.Completed {
@@ -210,6 +212,19 @@ func ModifyTask(c *gin.Context, id string, request task.ModifyTaskRequest) (*res
 
 	if task.EstimatedEndTime != nil && task.EstimatedEndTime.Before(*utils.GetCurrent()) {
 		task.Status = constant.Expired
+	}
+
+	if task.Status == constant.Expired && task.EstimatedEndTime != nil {
+		if task.EstimatedEndTime.After(*utils.GetCurrent()) {
+			if task.ActualStartTime == nil || task.ActualStartTime.After(*utils.GetCurrent()) {
+				task.Status = constant.ToDo
+				task.ActualEndTime = nil
+			} else {
+				task.Status = constant.InProgress
+				task.ActualStartTime = utils.GetCurrent()
+				task.ActualEndTime = nil
+			}
+		}
 	}
 
 	if subject != nil {
@@ -280,6 +295,14 @@ func ModifyTaskStatus(c *gin.Context, id string, request task.ModifyTaskStatusRe
 		}
 	}
 
+	//cannot modify status of expired task
+	if task.Status == constant.Expired && request.Status != "Expired" {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Cannot modify status of expired task",
+		}
+	}
+
 	status, _ := constant.StringToStatus(request.Status)
 	if status == -1 {
 		return nil, &config.APIError{
@@ -294,12 +317,6 @@ func ModifyTaskStatus(c *gin.Context, id string, request task.ModifyTaskStatusRe
 		// set estimated end time to current time + 12 hours
 		newTime := utils.GetCurrent().Add(12 * 60 * 60 * 1000000000)
 		task.EstimatedEndTime = &newTime
-	} else if task.Status == constant.Expired {
-		if task.ActualStartTime == nil || task.ActualStartTime.After(*utils.GetCurrent()) {
-			task.Status = constant.ToDo
-		} else {
-			task.Status = constant.InProgress
-		}
 	} else {
 		//if change status to completed, set actual end time
 		if status == constant.Completed {
@@ -358,6 +375,56 @@ func ModifyTaskStatus(c *gin.Context, id string, request task.ModifyTaskStatusRe
 	}
 
 	return response, nil
+}
+
+func GetTaskById(c *gin.Context, id string) (*responseTask.GetTaskResponse, *config.APIError) {
+	//Get current user
+	curUser, _ := utils.GetCurrentUser(c)
+	if curUser == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+	}
+
+	task, _ := repository.FindTaskByIdAndUserId(c, id, curUser.ID.Hex())
+
+	if task == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusNotFound,
+			Message: "Task not found",
+		}
+	}
+
+	var subject *models.Subject = nil
+
+	if task.Subject != nil {
+		subject, _ := repository.FindSubjectById(c, task.Subject.Hex())
+		if subject != nil && subject.IsDeleted {
+			return nil, &config.APIError{
+				Code:    http.StatusNotFound,
+				Message: "Subject not found",
+			}
+		}
+	}
+
+	return &responseTask.GetTaskResponse{
+		ID:                 task.ID,
+		Name:               task.Name,
+		Description:        task.Description,
+		Subject:            subject,
+		User:               curUser,
+		Priority:           constant.PriorityToString(task.Priority),
+		Status:             constant.StatusToString(task.Status),
+		EstimatedStartTime: task.EstimatedStartTime,
+		EstimatedEndTime:   task.EstimatedEndTime,
+		ActualStartTime:    task.ActualStartTime,
+		ActualEndTime:      task.ActualEndTime,
+		FocusTime:          task.FocusTime,
+		IsDeleted:          task.IsDeleted,
+		CreatedAt:          task.CreatedAt,
+		UpdatedAt:          task.UpdatedAt,
+	}, nil
 }
 
 func GetPagingTask(c *gin.Context, limit, page int, filter, sort bson.M) ([]*responseTask.GetTaskResponse, int, int, *config.APIError) {
