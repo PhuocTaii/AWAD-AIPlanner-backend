@@ -43,6 +43,28 @@ func GoogleLogin(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, url)
 }
 
+func ForgotPassword(c *gin.Context) {
+	var request auth.ForgotPasswordRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		error := &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid user data",
+		}
+		config.HandleError(c, error)
+		return
+	}
+	err := services.ForgotPassword(c, request.Email)
+
+	if err != nil {
+		config.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Please check your email!",
+	})
+}
+
 func GoogleCallback(c *gin.Context) {
 	token, user, _, err := services.GoogleLogin(c)
 
