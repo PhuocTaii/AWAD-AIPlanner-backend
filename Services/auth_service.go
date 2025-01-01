@@ -1,8 +1,6 @@
 package services
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -52,6 +50,46 @@ func Login(ctx *gin.Context, email, password string) (string, *user.UserResponse
 	}
 
 	return stringToken, res, nil
+}
+
+func ForgotPassword(ctx *gin.Context, email string) *config.APIError {
+
+	user, err := repository.FindUserByEmail(ctx, email)
+
+	if err != nil {
+		return &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Email not found",
+		}
+	}
+
+	newPassword := utils.GeneratePassword()
+
+	hash, _ := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+
+	if hash == nil {
+		return &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Error hashing password",
+		}
+	}
+
+	user.Password = string(hash)
+
+	if _, err := repository.UpdateUser(ctx, user); err != nil {
+		return &config.APIError{
+			Code:    http.StatusInternalServerError,
+			Message: "Error updating password",
+		}
+	}
+
+	go func() {
+		if err := utils.SendResetPasswordEmail(email, newPassword); err != nil {
+		}
+	}()
+
+	return nil
+
 }
 
 func GoogleLogin(c *gin.Context) (string, *user.UserResponse, *models.TimerSetting, *config.APIError) {
@@ -104,7 +142,7 @@ func GoogleLogin(c *gin.Context) (string, *user.UserResponse, *models.TimerSetti
 	newUser, err = repository.FindUserByEmailAndVerification(c, logUser.Email, true) // Find user by email from google response
 
 	if err != nil {
-		verficatonCode := generateVerifcationCode()
+		verficatonCode := utils.GenerateVerifcationCode()
 		tmp := &models.User{Name: logUser.Name, Email: logUser.Email, GoogleID: logUser.ID, IsVerified: true, VerificationCode: verficatonCode} // Create a new user
 		newUser, err = repository.InsertUser(c, tmp)                                                                                            // Insert the user
 		if err != nil {
@@ -148,12 +186,6 @@ func GoogleLogin(c *gin.Context) (string, *user.UserResponse, *models.TimerSetti
 	return stringToken, res, timerSetting, nil
 }
 
-func generateVerifcationCode() string {
-	bytes := make([]byte, 16)
-	rand.Read(bytes)
-	return hex.EncodeToString(bytes)
-}
-
 func Register(ctx *gin.Context, user *models.User) *config.APIError {
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -171,7 +203,7 @@ func Register(ctx *gin.Context, user *models.User) *config.APIError {
 		}
 	}
 
-	verificationCode := generateVerifcationCode()
+	verificationCode := utils.GenerateVerifcationCode()
 
 	var tmp = &models.User{
 		Name:             user.Name,

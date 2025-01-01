@@ -16,5 +16,6 @@ func SetupAuthRouter(apiGroup *gin.RouterGroup) {
 		auth.GET("/google_login", controllers.GoogleLogin)
 		auth.GET("/google_callback", controllers.GoogleCallback)
 		auth.POST("/logout", middleware.RequireAuth, controllers.Logout)
+		auth.POST("/forgot_password", controllers.ForgotPassword)
 	}
 }
