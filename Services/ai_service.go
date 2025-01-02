@@ -86,7 +86,7 @@ func AIGen(c *gin.Context, aiType string) (*genai.GenerateContentResponse, *conf
 	var textPrompt string
 
 	if aiType == "suggest" {
-		textPrompt = "You are an expert in creating study plans, and you will evaluate the following plan and provide feedback. You must skip the task's focus time. Your feedback should on potential adjustments, such as:" +
+		textPrompt = "You are an expert in creating study plans, and you will evaluate the following plan and provide feedback. You must skip the task's focus time. If available, you should manipulate task, timer, subject, ... instead of sugestonly .Your feedback should on potential adjustments, such as:" +
 			"Warning about overly tight schedules that may lead to burnout." +
 			"Recommending prioritization changes for improved focus and balance." + string(jsonString)
 	} else if aiType == "analyze" {
