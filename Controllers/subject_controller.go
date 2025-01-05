@@ -72,3 +72,12 @@ func DeleteSubject(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, res)
 }
+
+func GetTaskAmountsBySubject(c *gin.Context) {
+	taskAmounts, err := services.GetTaskAmountBySubject(c)
+	if err != nil {
+		defer config.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, taskAmounts)
+}

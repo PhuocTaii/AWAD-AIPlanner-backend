@@ -59,7 +59,7 @@ func InsertTask(ctx *gin.Context, task *models.Task) (*models.Task, error) {
 	return response, nil
 }
 
-func FindTaskByIdAndUserId(ctx *gin.Context, id string, userId string) (*models.Task, error) {
+func FindTaskByIdAndUserId(ctx *gin.Context, id, userId string) (*models.Task, error) {
 	var task *models.Task
 	err := config.TaskCollection.FindOne(ctx, bson.M{"_id": utils.ConvertStringToObjectID(id), "user": utils.ConvertStringToObjectID(userId)}).Decode(&task)
 	if err != nil {
@@ -145,4 +145,13 @@ func ModifyDeletedSubjectTasks(ctx *gin.Context, subjectId string) error {
 		return err
 	}
 	return nil
+}
+
+func GetAmountByUserSubject(ctx *gin.Context, subjectId, userId string) (int, error) {
+	filter := bson.M{"subject": utils.ConvertStringToObjectID(subjectId), "is_deleted": false, "user": utils.ConvertStringToObjectID(userId)}
+	count, err := config.TaskCollection.CountDocuments(ctx, filter)
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
 }
