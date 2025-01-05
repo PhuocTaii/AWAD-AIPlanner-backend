@@ -5,6 +5,7 @@ import (
 	config "project/Config"
 	models "project/Models"
 	subject "project/Models/Request/Subject"
+	response "project/Models/Response/SubjectTask"
 	repository "project/Repository"
 	utils "project/Utils"
 
@@ -167,4 +168,38 @@ func DeleteSubject(c *gin.Context, id string) (*models.Subject, *config.APIError
 	}()
 
 	return res, nil
+}
+
+func GetTaskAmountBySubject(c *gin.Context) ([]*response.SubjectTask, *config.APIError) {
+	curUser, _ := utils.GetCurrentUser(c)
+
+	if curUser == nil {
+		return nil, &config.APIError{
+			Code:    http.StatusUnauthorized,
+			Message: "Unauthorized",
+		}
+	}
+
+	SubjectList, _ := repository.FindAllUserSubject(c, curUser.ID.Hex())
+	if len(SubjectList) == 0 {
+		return nil, &config.APIError{
+			Code:    http.StatusNotFound,
+			Message: "No subject found",
+		}
+	}
+
+	responseList := make([]*response.SubjectTask, 0)
+
+	for i := range SubjectList {
+		amount, _ := repository.GetAmountByUserSubject(c, SubjectList[i].ID.Hex(), curUser.ID.Hex())
+		responseList = append(responseList, &response.SubjectTask{
+			Subject: response.SubjectDto{
+				ID:   SubjectList[i].ID.Hex(),
+				Name: SubjectList[i].Name,
+			},
+			Tasks: amount,
+		})
+	}
+
+	return responseList, nil
 }

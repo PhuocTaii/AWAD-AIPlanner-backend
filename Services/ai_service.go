@@ -33,7 +33,6 @@ func AIGen(c *gin.Context, aiType string) (*genai.GenerateContentResponse, *conf
 		}
 	}
 
-	// var taskResponses [][]*ai.AiTask
 	taskResponses := make([][]*ai.AiTask, 0)
 
 	for _, subject := range SubjectList {

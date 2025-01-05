@@ -14,5 +14,6 @@ func SetupSubjectRouter(apiGroup *gin.RouterGroup) {
 		subject.GET("/", middleware.RequireAuth, controllers.GetSubjects)
 		subject.PUT("/:id", middleware.RequireAuth, controllers.UpdateSubject)
 		subject.DELETE("/:id", middleware.RequireAuth, controllers.DeleteSubject)
+		subject.GET("/amount-task", middleware.RequireAuth, controllers.GetTaskAmountsBySubject)
 	}
 }
