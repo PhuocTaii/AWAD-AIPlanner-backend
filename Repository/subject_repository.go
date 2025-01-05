@@ -57,6 +57,7 @@ func IsSubjectExisted(ctx *gin.Context, name, userId string) bool {
 	filter := bson.M{
 		"name": name,
 		"user": utils.ConvertStringToObjectID(userId),
+		"is_deleted": false,
 	}
 	var subject *models.Subject
 	err := config.SubjectCollection.FindOne(ctx, filter).Decode(&subject)

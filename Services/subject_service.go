@@ -118,6 +118,15 @@ func ModifySubject(c *gin.Context, id string, request subject.ModifySubjectReque
 		}
 	}
 
+	// Check if subject name is already exist
+	IsSubjectExisted := repository.IsSubjectExisted(c, subject.Name, curUser.ID.Hex())
+	if IsSubjectExisted {
+		return nil, &config.APIError{
+			Code:    http.StatusBadRequest,
+			Message: "Subject name is already exist",
+		}
+	}
+
 	subject.Name = request.Name
 
 	// Update task
