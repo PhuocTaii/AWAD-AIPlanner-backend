@@ -43,7 +43,7 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 	}
 
 	status, _ := constant.StringToStatus(request.Status)
-	if status == -1 {
+	if status == -1 || status == constant.Expired || status == constant.Completed {
 		return nil, &config.APIError{
 			Code:    http.StatusBadRequest,
 			Message: "Invalid status",
@@ -66,6 +66,9 @@ func CreateTask(c *gin.Context, request task.CreateTaskRequest) (*responseTask.G
 		task.Subject = nil
 	}
 
+	if status == constant.InProgress {
+		task.ActualStartTime = utils.GetCurrent()
+	}
 	// Insert task
 	res, _ := repository.InsertTask(c, task)
 	if res == nil {
